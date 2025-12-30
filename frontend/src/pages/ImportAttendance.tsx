@@ -212,6 +212,22 @@ export function ImportAttendance() {
             <h2>Import Participants from CSV</h2>
             <p className="section-desc">Upload a CSV file with columns: name, email, phone (optional)</p>
 
+            <div className="form-group">
+              <label htmlFor="event-select-participants">Select Event (Optional)</label>
+              <select
+                id="event-select-participants"
+                value={selectedEvent}
+                onChange={(e) => setSelectedEvent(e.target.value)}
+              >
+                <option value="">-- Choose an event --</option>
+                {events?.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.name} ({new Date(event.date).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="file-upload">
               <input
                 type="file"

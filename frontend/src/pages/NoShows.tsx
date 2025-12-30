@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { attendanceAPI, participantsAPI, eventsAPI } from '../api/client';
+import { attendanceAPI, participantsAPI, eventsAPI, blocklistAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
-import { formatDate } from '../utils/formatters';
+import { formatDate, formatDateTime } from '../utils/formatters';
 import './NoShows.css';
 
 interface NoShowRecord {
@@ -18,6 +18,7 @@ interface Participant {
   id: string;
   name: string;
   email: string;
+  is_blocklisted: boolean;
 }
 
 interface Event {
@@ -31,6 +32,7 @@ export function NoShows() {
   const [selectedParticipant, setSelectedParticipant] = useState<string>('');
   const [noShowCounts, setNoShowCounts] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
+  const [blocklistData, setBlocklistData] = useState<any[]>([]);
 
   const { data: events } = useAsync<Event[]>(
     () => eventsAPI.getAll().then((res) => res.data),
@@ -41,6 +43,19 @@ export function NoShows() {
     () => participantsAPI.getAll(true).then((res) => res.data),
     true
   );
+
+  // Load blocklist data
+  useEffect(() => {
+    const loadBlocklist = async () => {
+      try {
+        const res = await blocklistAPI.getAll();
+        setBlocklistData(res.data || []);
+      } catch (error) {
+        console.error('Failed to load blocklist:', error);
+      }
+    };
+    loadBlocklist();
+  }, []);
 
   useEffect(() => {
     const loadNoShows = async () => {
@@ -95,12 +110,25 @@ export function NoShows() {
     ? noShowRecords.filter((r) => r.participant_id === selectedParticipant)
     : noShowRecords;
 
-  const participantStats = participants?.map((p) => ({
-    ...p,
-    noShowCount: noShowCounts[p.id] || 0,
-  })) || [];
+  const participantStats = participants?.map((p) => {
+    const participantNoShows = noShowRecords.filter(r => r.participant_id === p.id);
+    const noShowCount = noShowCounts[p.id] || 0;
+    const isBlocklisted = blocklistData.some(b => b.participant_id === p.id);
+    
+    return {
+      ...p,
+      noShowCount,
+      noShowRecords: participantNoShows,
+      is_blocklisted: p.is_blocklisted || isBlocklisted,
+      criticalSince: noShowCount >= 2 && participantNoShows.length >= 2 
+        ? participantNoShows.sort((a, b) => new Date(a.marked_at).getTime() - new Date(b.marked_at).getTime())[1].marked_at
+        : undefined,
+    };
+  }) || [];
 
   const criticalParticipants = participantStats.filter((p) => p.noShowCount >= 2);
+
+  const selectedParticipantData = participantStats.find(p => p.id === selectedParticipant);
 
   if (loading) {
     return (
@@ -115,7 +143,7 @@ export function NoShows() {
     <div className="no-shows">
       <div className="page-header">
         <h1>No-Show Management</h1>
-        <p>Track and manage participant no-shows</p>
+        <p>Track and manage participant no-shows with complete history</p>
       </div>
 
       <div className="stats-section">
@@ -134,14 +162,22 @@ export function NoShows() {
             <p className="stat-value">{criticalParticipants.length}</p>
           </div>
         </div>
+
+        <div className="stat-card stat-card-blocklisted">
+          <div className="stat-icon">🚫</div>
+          <div className="stat-content">
+            <h3>Blocklisted</h3>
+            <p className="stat-value">{criticalParticipants.filter(p => p.is_blocklisted).length}</p>
+          </div>
+        </div>
       </div>
 
       <div className="content-grid">
         <div className="card">
-          <h2>Participant No-Show Summary</h2>
+          <h2>Participant No-Show History</h2>
           <div className="participant-list">
             {participantStats.length === 0 ? (
-              <p className="empty-text">No participants found</p>
+              <p className="empty-text">No participants with no-shows</p>
             ) : (
               participantStats
                 .filter((p) => p.noShowCount > 0)
@@ -161,11 +197,19 @@ export function NoShows() {
                     <div className="participant-info">
                       <h4>{p.name}</h4>
                       <p>{p.email}</p>
+                      {p.noShowCount >= 2 && (
+                        <p className="critical-since">
+                          🚨 Critical since {formatDate(p.criticalSince || '')}
+                        </p>
+                      )}
                     </div>
-                    <div className="no-show-badge">
+                    <div className="no-show-badges">
                       <span className={`badge badge-${p.noShowCount >= 2 ? 'danger' : 'warning'}`}>
                         {p.noShowCount} no-show{p.noShowCount > 1 ? 's' : ''}
                       </span>
+                      {p.is_blocklisted && (
+                        <span className="badge badge-blocklisted">🚫 Blocklisted</span>
+                      )}
                     </div>
                   </div>
                 ))
@@ -176,9 +220,35 @@ export function NoShows() {
         <div className="card">
           <h2>
             {selectedParticipant
-              ? 'No-Show History'
+              ? `${selectedParticipantData?.name} - No-Show History (${filteredRecords.length})`
               : 'All No-Show Records'}
           </h2>
+
+          {selectedParticipant && selectedParticipantData && (
+            <div className="selected-participant-summary">
+              <div className="summary-item">
+                <span className="label">Email:</span>
+                <span className="value">{selectedParticipantData.email}</span>
+              </div>
+              <div className="summary-item">
+                <span className="label">Total No-Shows:</span>
+                <span className="value">{selectedParticipantData.noShowCount}</span>
+              </div>
+              {selectedParticipantData.noShowCount >= 2 && (
+                <div className="summary-item critical">
+                  <span className="label">Critical Status:</span>
+                  <span className="value">Since {formatDateTime(selectedParticipantData.criticalSince || '')}</span>
+                </div>
+              )}
+              {selectedParticipantData.is_blocklisted && (
+                <div className="summary-item blocklisted">
+                  <span className="label">Status:</span>
+                  <span className="value">🚫 Added to Blocklist</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="records-list">
             {filteredRecords.length === 0 ? (
               <p className="empty-text">
@@ -187,29 +257,32 @@ export function NoShows() {
                   : 'No no-show records found'}
               </p>
             ) : (
-              <div className="table-wrapper">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Participant</th>
-                      <th>Event</th>
-                      <th>Date</th>
-                      <th>Marked</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRecords.map((record) => (
-                      <tr key={record.id}>
-                        <td>
-                          <strong>{record.participant_name}</strong>
-                        </td>
-                        <td>{record.event_name}</td>
-                        <td>{formatDate(record.date)}</td>
-                        <td>{formatDate(record.marked_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="timeline">
+                {filteredRecords
+                  .sort((a, b) => new Date(a.marked_at).getTime() - new Date(b.marked_at).getTime())
+                  .map((record, index) => (
+                    <div key={record.id} className="timeline-item">
+                      <div className="timeline-marker">
+                        <div className="marker-dot"></div>
+                        {index < filteredRecords.length - 1 && <div className="marker-line"></div>}
+                      </div>
+                      <div className="timeline-content">
+                        <div className="timeline-header">
+                          <span className="event-name">{record.event_name}</span>
+                          <span className="badge badge-danger">No-Show #{index + 1}</span>
+                        </div>
+                        <div className="timeline-meta">
+                          <span>📅 Event: {formatDate(record.date)}</span>
+                          <span>🕐 Marked: {formatDateTime(record.marked_at)}</span>
+                        </div>
+                        {index === 1 && filteredRecords.length >= 2 && (
+                          <div className="timeline-alert">
+                            ⚠️ Critical threshold reached - Auto-block triggered
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
               </div>
             )}
           </div>
@@ -219,7 +292,12 @@ export function NoShows() {
       {criticalParticipants.length > 0 && (
         <div className="alert alert-warning" style={{ marginTop: '30px' }}>
           <strong>⚠️ Auto-Block Alert:</strong> {criticalParticipants.length} participant(s)
-          have 2 or more no-shows and have been automatically added to the blocklist.
+          with 2 or more no-shows have been automatically added to the blocklist.
+          {criticalParticipants.filter(p => p.is_blocklisted).length > 0 && (
+            <p style={{ marginTop: '8px' }}>
+              ✅ {criticalParticipants.filter(p => p.is_blocklisted).length} of {criticalParticipants.length} are now blocklisted.
+            </p>
+          )}
         </div>
       )}
     </div>
