@@ -38,8 +38,8 @@ export const validateVolunteerData = (data: any): void => {
   if (!data.email || !validateEmail(data.email)) {
     throw new ValidationError('email', 'Valid email is required');
   }
-  if (!data.role || typeof data.role !== 'string' || data.role.trim().length === 0) {
-    throw new ValidationError('role', 'Volunteer role is required');
+  if (!data.comment || typeof data.comment !== 'string' || data.comment.trim().length === 0) {
+    throw new ValidationError('comment', 'Volunteer comment is required');
   }
 };
 

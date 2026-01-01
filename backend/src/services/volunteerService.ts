@@ -4,7 +4,7 @@ export interface Volunteer {
   id: string;
   name: string;
   email: string;
-  role: string;
+  comment: string;
   place?: string;
   joined_date: string;
   created_at: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { volunteersAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import { formatDate } from '../utils/formatters';
@@ -8,7 +8,7 @@ interface Volunteer {
   id: string;
   name: string;
   email: string;
-  role: string;
+  comment: string;
   place?: string;
   joined_date: string;
 }
@@ -20,7 +20,7 @@ export function Volunteers() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: '',
+    comment: '',
     place: '',
   });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -30,6 +30,10 @@ export function Volunteers() {
     true
   );
 
+  useEffect(() => {
+    refetch();
+  }, [sortBy]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -38,8 +42,8 @@ export function Volunteers() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.role) {
-      setMessage({ type: 'error', text: 'Name, email, and role are required' });
+    if (!formData.name || !formData.email || !formData.comment) {
+      setMessage({ type: 'error', text: 'Name, email, and comment are required' });
       return;
     }
 
@@ -52,7 +56,7 @@ export function Volunteers() {
         setMessage({ type: 'success', text: 'Volunteer added successfully' });
       }
 
-      setFormData({ name: '', email: '', role: '', place: '' });
+      setFormData({ name: '', email: '', comment: '', place: '' });
       setEditingId(null);
       setShowForm(false);
       refetch();
@@ -68,7 +72,7 @@ export function Volunteers() {
     setFormData({
       name: volunteer.name,
       email: volunteer.email,
-      role: volunteer.role,
+      comment: volunteer.comment,
       place: volunteer.place || '',
     });
     setEditingId(volunteer.id);
@@ -93,7 +97,7 @@ export function Volunteers() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', email: '', role: '', place: '' });
+    setFormData({ name: '', email: '', comment: '', place: '' });
   };
 
   if (loading) {
@@ -171,14 +175,14 @@ export function Volunteers() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="role">Role *</label>
+                <label htmlFor="comment">Comment *</label>
                 <input
-                  id="role"
+                  id="comment"
                   type="text"
-                  name="role"
-                  value={formData.role}
+                  name="comment"
+                  value={formData.comment}
                   onChange={handleInputChange}
-                  placeholder="e.g., Coordinator, Assistant"
+                  placeholder="e.g., Team Lead, Event Organizer"
                   required
                 />
               </div>
@@ -219,7 +223,7 @@ export function Volunteers() {
               <div key={volunteer.id} className="volunteer-card card">
                 <div className="volunteer-header">
                   <h3>{volunteer.name}</h3>
-                  <span className="role-badge">{volunteer.role}</span>
+                  <span className="role-badge">{volunteer.comment}</span>
                 </div>
 
                 <div className="volunteer-info">

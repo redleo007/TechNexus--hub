@@ -68,7 +68,14 @@ export const dashboardAPI = {
 
 // Error handler
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    // response.data contains the ApiResponse { success, data, timestamp }
+    // Return the data field for easier access in components
+    return {
+      ...response,
+      data: response.data.data,
+    };
+  },
   (error) => {
     const message = error.response?.data?.error || error.message || 'An error occurred';
     return Promise.reject(new Error(message));

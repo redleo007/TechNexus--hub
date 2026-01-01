@@ -19,7 +19,11 @@ router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
     const events = await eventService.getEvents();
-    res.json(successResponse(events));
+    res.json({
+      success: true,
+      data: [...events],
+      timestamp: '...',
+    });
   })
 );
 

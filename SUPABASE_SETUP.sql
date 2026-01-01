@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS volunteers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  role TEXT NOT NULL,
+  comment TEXT NOT NULL,
   place TEXT,
   joined_date TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()

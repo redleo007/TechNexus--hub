@@ -172,6 +172,79 @@ export function ImportAttendance() {
     return status.toLowerCase() === 'attended' ? 'badge-success' : 'badge-danger';
   };
 
+  const convertToCSV = (data: any[], headers: string[]): string => {
+    const csvHeaders = headers.join(',');
+    const csvRows = data.map((row) =>
+      headers.map((header) => {
+        const value = row[header];
+        // Escape quotes and wrap in quotes if contains comma
+        const escaped = String(value || '').replace(/"/g, '""');
+        return escaped.includes(',') ? `"${escaped}"` : escaped;
+      }).join(',')
+    );
+    return [csvHeaders, ...csvRows].join('\n');
+  };
+
+  const downloadCSV = (csvContent: string, filename: string) => {
+    const element = document.createElement('a');
+    element.setAttribute('href', `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`);
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleExportParticipants = () => {
+    if (!participants || participants.length === 0) {
+      setMessage({ type: 'error', text: 'No participants to export' });
+      return;
+    }
+
+    const data = participants.map((p) => ({
+      name: p.name,
+      email: p.email,
+      is_blocklisted: p.is_blocklisted ? 'yes' : 'no',
+    }));
+
+    const csv = convertToCSV(data, ['name', 'email', 'is_blocklisted']);
+    downloadCSV(csv, `participants_${new Date().toISOString().split('T')[0]}.csv`);
+    setMessage({ type: 'success', text: 'Participants exported successfully' });
+  };
+
+  const handleExportAttendance = async () => {
+    if (!selectedEvent) {
+      setMessage({ type: 'error', text: 'Please select an event first' });
+      return;
+    }
+
+    try {
+      const attendance = await attendanceAPI.getByEvent(selectedEvent).then((res) => res.data);
+      
+      if (!attendance || attendance.length === 0) {
+        setMessage({ type: 'error', text: 'No attendance records for this event' });
+        return;
+      }
+
+      const event = events?.find((e) => e.id === selectedEvent);
+      const data = attendance.map((record: any) => ({
+        email: record.participant_email || record.email,
+        status: record.status,
+        event: event?.name || 'Unknown',
+        date: event?.date ? new Date(event.date).toLocaleDateString() : 'Unknown',
+      }));
+
+      const csv = convertToCSV(data, ['email', 'status', 'event', 'date']);
+      downloadCSV(csv, `attendance_${event?.name || 'export'}_${new Date().toISOString().split('T')[0]}.csv`);
+      setMessage({ type: 'success', text: 'Attendance records exported successfully' });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to export attendance',
+      });
+    }
+  };
+
   return (
     <div className="import-attendance">
       <div className="page-header">
@@ -209,8 +282,19 @@ export function ImportAttendance() {
       <div className="tab-content card">
         {activeTab === 'import-participants' && (
           <div className="import-section">
-            <h2>Import Participants from CSV</h2>
-            <p className="section-desc">Upload a CSV file with columns: name, email, phone (optional)</p>
+            <div className="section-header">
+              <div>
+                <h2>Import Participants from CSV</h2>
+                <p className="section-desc">Upload a CSV file with columns: name, email, phone (optional)</p>
+              </div>
+              <button
+                className="btn btn-secondary"
+                onClick={handleExportParticipants}
+                title="Export all participants to CSV"
+              >
+                📥 Export Participants
+              </button>
+            </div>
 
             <div className="form-group">
               <label htmlFor="event-select-participants">Select Event (Optional)</label>
@@ -300,8 +384,20 @@ export function ImportAttendance() {
 
         {activeTab === 'import-attendance' && (
           <div className="import-section">
-            <h2>Import Attendance from CSV</h2>
-            <p className="section-desc">Upload a CSV file with columns: email, status (attended/no_show)</p>
+            <div className="section-header">
+              <div>
+                <h2>Import Attendance from CSV</h2>
+                <p className="section-desc">Upload a CSV file with columns: email, status (attended/no_show)</p>
+              </div>
+              <button
+                className="btn btn-secondary"
+                onClick={handleExportAttendance}
+                disabled={!selectedEvent}
+                title="Export attendance records to CSV"
+              >
+                📥 Export Attendance
+              </button>
+            </div>
 
             <div className="form-group">
               <label htmlFor="event-select">Select Event *</label>
