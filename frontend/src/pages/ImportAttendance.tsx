@@ -34,6 +34,36 @@ export function ImportAttendance() {
     true
   );
 
+  const normalizeColumnName = (col: string): string => {
+    return col.toLowerCase().trim().replace(/\s+/g, '_');
+  };
+
+  const mapColumnNames = (row: any): any => {
+    const mappedRow: any = {};
+    
+    for (const key in row) {
+      const normalizedKey = normalizeColumnName(key);
+      
+      // Map common column name variations
+      if (normalizedKey.includes('email')) {
+        mappedRow.email = row[key];
+      } else if (normalizedKey.includes('name') && !normalizedKey.includes('event')) {
+        mappedRow.name = row[key];
+      } else if (normalizedKey.includes('phone')) {
+        mappedRow.phone = row[key];
+      } else if (normalizedKey.includes('status') || normalizedKey.includes('attendance')) {
+        mappedRow.status = row[key];
+      } else if (normalizedKey.includes('blocklist')) {
+        mappedRow.is_blocklisted = row[key];
+      } else {
+        // Keep original if no mapping
+        mappedRow[normalizedKey] = row[key];
+      }
+    }
+    
+    return mappedRow;
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -42,8 +72,12 @@ export function ImportAttendance() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        setFileData(results.data as any[]);
+        // Map column names to expected format
+        const mappedData = (results.data as any[]).map(mapColumnNames);
+        setFileData(mappedData);
         setMessage(null);
+        console.log('CSV parsed successfully. First row:', mappedData[0]);
+        console.log('Total rows:', mappedData.length);
       },
       error: (error) => {
         setMessage({ type: 'error', text: `CSV parsing error: ${error.message || 'Unknown error'}` });
@@ -56,7 +90,10 @@ export function ImportAttendance() {
   };
 
   const validateAttendanceData = (row: any): boolean => {
-    return row.email && (row.status === 'attended' || row.status === 'no_show');
+    if (!row.email) return false;
+    if (!row.status) return false;
+    const status = row.status.toLowerCase();
+    return status === 'attended' || status === 'no_show';
   };
 
   const handleImportParticipants = async () => {
@@ -77,6 +114,7 @@ export function ImportAttendance() {
     setImporting(true);
     let successful = 0;
     let failed = 0;
+    const errors: string[] = [];
 
     for (const row of fileData) {
       try {
@@ -87,15 +125,28 @@ export function ImportAttendance() {
           is_blocklisted: false,
         });
         successful++;
-      } catch {
+      } catch (error) {
         failed++;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errors.push(`Row: ${row.email} - ${errorMsg}`);
+        console.error(`Failed to import participant ${row.email}:`, error);
       }
     }
 
     setImporting(false);
+    
+    let messageText = `Import completed: ${successful} successful, ${failed} failed`;
+    if (errors.length > 0) {
+      console.error('Import errors:', errors);
+      messageText += `\n\nFirst few errors:\n${errors.slice(0, 3).join('\n')}`;
+      if (errors.length > 3) {
+        messageText += `\n... and ${errors.length - 3} more errors (see console for details)`;
+      }
+    }
+    
     setMessage({
       type: failed === 0 ? 'success' : 'error',
-      text: `Import completed: ${successful} successful, ${failed} failed`,
+      text: messageText,
     });
 
     if (successful > 0) {
@@ -128,6 +179,9 @@ export function ImportAttendance() {
     setImporting(true);
     let successful = 0;
     let failed = 0;
+    const errors: string[] = [];
+    let notFound = 0;
+    let blocklisted = 0;
 
     for (const row of fileData) {
       try {
@@ -137,11 +191,15 @@ export function ImportAttendance() {
 
         if (!participant) {
           failed++;
+          notFound++;
+          errors.push(`Row: ${row.email} - Participant not found`);
           continue;
         }
 
         if (participant.is_blocklisted) {
           failed++;
+          blocklisted++;
+          errors.push(`Row: ${row.email} - Participant is blocklisted`);
           continue;
         }
 
@@ -151,15 +209,32 @@ export function ImportAttendance() {
           status: row.status.toLowerCase() === 'attended' ? 'attended' : 'no_show',
         });
         successful++;
-      } catch {
+      } catch (error) {
         failed++;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errors.push(`Row: ${row.email} - ${errorMsg}`);
+        console.error(`Failed to mark attendance for ${row.email}:`, error);
       }
     }
 
     setImporting(false);
+    
+    let messageText = `Import completed: ${successful} successful, ${failed} failed`;
+    if (notFound > 0 || blocklisted > 0) {
+      messageText += ` (${notFound} not found, ${blocklisted} blocklisted)`;
+    }
+    
+    if (errors.length > 0) {
+      console.error('Attendance import errors:', errors);
+      messageText += `\n\nFirst few errors:\n${errors.slice(0, 3).join('\n')}`;
+      if (errors.length > 3) {
+        messageText += `\n... and ${errors.length - 3} more errors (see console for details)`;
+      }
+    }
+    
     setMessage({
       type: failed === 0 ? 'success' : 'error',
-      text: `Import completed: ${successful} successful, ${failed} failed/blocklisted`,
+      text: messageText,
     });
 
     if (successful > 0) {
@@ -168,7 +243,8 @@ export function ImportAttendance() {
     }
   };
 
-  const getStatusColor = (status: string): string => {
+  const getStatusColor = (status: string | undefined): string => {
+    if (!status) return 'badge-danger';
     return status.toLowerCase() === 'attended' ? 'badge-success' : 'badge-danger';
   };
 
