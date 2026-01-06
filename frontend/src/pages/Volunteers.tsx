@@ -10,6 +10,7 @@ interface Volunteer {
   email: string;
   comment: string;
   place?: string;
+  is_active: boolean;
   joined_date: string;
 }
 
@@ -24,6 +25,7 @@ export function Volunteers() {
     place: '',
   });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const { data: volunteers, loading, refetch } = useAsync<Volunteer[]>(
     () => volunteersAPI.getAll(sortBy).then((res) => res.data),
@@ -98,6 +100,26 @@ export function Volunteers() {
     setShowForm(false);
     setEditingId(null);
     setFormData({ name: '', email: '', comment: '', place: '' });
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    setTogglingId(id);
+    try {
+      const newStatus = !currentStatus;
+      await volunteersAPI.toggleStatus(id, newStatus);
+      setMessage({ 
+        type: 'success', 
+        text: `Volunteer ${newStatus ? 'activated' : 'deactivated'} successfully` 
+      });
+      refetch();
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to toggle volunteer status',
+      });
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   if (loading) {
@@ -222,8 +244,13 @@ export function Volunteers() {
             {volunteers.map((volunteer) => (
               <div key={volunteer.id} className="volunteer-card card">
                 <div className="volunteer-header">
-                  <h3>{volunteer.name}</h3>
-                  <span className="role-badge">{volunteer.comment}</span>
+                  <div className="header-content">
+                    <h3>{volunteer.name}</h3>
+                    <span className="role-badge">{volunteer.comment}</span>
+                  </div>
+                  <span className={`status-badge ${volunteer.is_active ? 'active' : 'inactive'}`}>
+                    {volunteer.is_active ? '✓ Active' : '✕ Inactive'}
+                  </span>
                 </div>
 
                 <div className="volunteer-info">
@@ -241,6 +268,13 @@ export function Volunteers() {
                 </div>
 
                 <div className="volunteer-actions">
+                  <button
+                    className={`btn ${volunteer.is_active ? 'btn-warning' : 'btn-success'} btn-sm`}
+                    onClick={() => handleToggleStatus(volunteer.id, volunteer.is_active)}
+                    disabled={togglingId === volunteer.id}
+                  >
+                    {togglingId === volunteer.id ? 'Updating...' : volunteer.is_active ? '🔒 Inactive' : '🔓 Active'}
+                  </button>
                   <button
                     className="btn btn-secondary btn-sm"
                     onClick={() => handleEdit(volunteer)}
@@ -270,6 +304,14 @@ export function Volunteers() {
           <div className="stat-item">
             <span className="label">Total Volunteers</span>
             <span className="value">{volunteers?.length || 0}</span>
+          </div>
+          <div className="stat-item">
+            <span className="label">Active Volunteers</span>
+            <span className="value">{volunteers?.filter(v => v.is_active).length || 0}</span>
+          </div>
+          <div className="stat-item">
+            <span className="label">Inactive Volunteers</span>
+            <span className="value">{volunteers?.filter(v => !v.is_active).length || 0}</span>
           </div>
           <div className="stat-item">
             <span className="label">Sorted By</span>

@@ -21,6 +21,9 @@ export const eventsAPI = {
 // Participants API
 export const participantsAPI = {
   create: (data: any) => api.post('/participants', data),
+  createWithEvent: (data: any) => api.post('/participants/with-event', data),
+  bulkCreateWithEvent: (data: any) => api.post('/participants/bulk-import', data),
+  bulkCreateWithEventBatch: (data: any) => api.post('/participants/bulk-import-batch', data),
   getAll: (includeBlocklisted: boolean = false) =>
     api.get('/participants', { params: { includeBlocklisted } }),
   getById: (id: string) => api.get(`/participants/${id}`),
@@ -32,6 +35,8 @@ export const participantsAPI = {
 // Attendance API
 export const attendanceAPI = {
   mark: (data: any) => api.post('/attendance', data),
+  bulkImport: (data: any) => api.post('/attendance/bulk-import', data),
+  bulkImportBatch: (data: any) => api.post('/attendance/bulk-import-batch', data),
   getByEvent: (eventId: string) => api.get(`/attendance/event/${eventId}`),
   getByParticipant: (participantId: string) => api.get(`/attendance/participant/${participantId}`),
   update: (id: string, status: string) => api.put(`/attendance/${id}`, { status }),
@@ -52,6 +57,8 @@ export const volunteersAPI = {
     api.get('/volunteers', { params: { sort } }),
   getById: (id: string) => api.get(`/volunteers/${id}`),
   update: (id: string, data: any) => api.put(`/volunteers/${id}`, data),
+  toggleStatus: (id: string, isActive: boolean) =>
+    api.patch(`/volunteers/${id}/toggle-status`, { is_active: isActive }),
   delete: (id: string) => api.delete(`/volunteers/${id}`),
 };
 

@@ -12,6 +12,7 @@ router.post(
     validateVolunteerData(req.body);
     const volunteer = await volunteerService.createVolunteer({
       ...req.body,
+      is_active: true,
       joined_date: new Date().toISOString(),
     });
     res.status(201).json(successResponse(volunteer));
@@ -39,6 +40,18 @@ router.put(
   '/:id',
   asyncHandler(async (req: Request, res: Response) => {
     const volunteer = await volunteerService.updateVolunteer(req.params.id, req.body);
+    res.json(successResponse(volunteer));
+  })
+);
+
+router.patch(
+  '/:id/toggle-status',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { is_active } = req.body;
+    if (typeof is_active !== 'boolean') {
+      return res.status(400).json({ error: 'is_active must be a boolean' });
+    }
+    const volunteer = await volunteerService.toggleVolunteerStatus(req.params.id, is_active);
     res.json(successResponse(volunteer));
   })
 );

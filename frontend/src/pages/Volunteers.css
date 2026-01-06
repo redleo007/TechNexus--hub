@@ -85,11 +85,39 @@
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.volunteer-header .header-content {
+  flex: 1;
 }
 
 .volunteer-header h3 {
   margin: 0;
   color: var(--neon-cyan);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+  background: rgba(0, 255, 65, 0.25);
+  color: var(--neon-lime);
+  border: 1px solid var(--neon-lime);
+}
+
+.status-badge.inactive {
+  background: rgba(255, 85, 85, 0.25);
+  color: #ff5555;
+  border: 1px solid #ff5555;
 }
 
 .role-badge {
@@ -101,6 +129,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
+  margin-top: 6px;
 }
 
 .volunteer-info {

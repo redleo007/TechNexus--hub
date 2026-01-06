@@ -60,12 +60,14 @@ CREATE TABLE IF NOT EXISTS volunteers (
   email TEXT NOT NULL UNIQUE,
   comment TEXT NOT NULL,
   place TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
   joined_date TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_volunteers_email ON volunteers(email);
 CREATE INDEX idx_volunteers_joined_date ON volunteers(joined_date DESC);
+CREATE INDEX idx_volunteers_is_active ON volunteers(is_active);
 
 -- Settings Table
 CREATE TABLE IF NOT EXISTS settings (

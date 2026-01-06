@@ -7,6 +7,53 @@ import { checkAndAutoBlock } from '../services/blocklistService';
 const router = Router();
 
 router.post(
+  '/bulk-import-batch',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { records } = req.body;
+    
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ error: 'records must be a non-empty array' });
+    }
+
+    // Validate all records
+    for (const record of records) {
+      if (!record.name || !record.email || !record.event_id || record.attendance_status === undefined) {
+        return res.status(400).json({ 
+          error: 'All records must have: name, email, event_id, attendance_status' 
+        });
+      }
+    }
+
+    const result = await attendanceService.bulkImportAttendanceBatch(records);
+    res.status(201).json(successResponse({
+      imported: result.imported,
+      failed: result.failed,
+      errors: result.errors,
+    }));
+  })
+);
+
+router.post(
+  '/bulk-import',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { name, email, event_id, attendance_status } = req.body;
+    
+    if (!name || !email || !event_id || !attendance_status) {
+      return res.status(400).json({ error: 'Missing required fields: name, email, event_id, attendance_status' });
+    }
+
+    const records = await attendanceService.bulkImportAttendance([{
+      name,
+      email,
+      event_id,
+      attendance_status,
+    }]);
+
+    res.status(201).json(successResponse(records[0]));
+  })
+);
+
+router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const { event_id, participant_id, status } = req.body;

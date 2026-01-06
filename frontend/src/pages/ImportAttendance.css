@@ -15,16 +15,19 @@
   font-size: 0.95rem;
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
+.tabs-container {
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--border-color);
-  padding: 0 0 0 0;
 }
 
-.tab-btn {
-  padding: 12px 20px;
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border-color);
+  padding: 0;
+}
+
+.tab-button {
+  padding: 12px 24px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
@@ -33,13 +36,14 @@
   border-bottom: 3px solid transparent;
   transition: all 0.3s ease;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
-.tab-btn:hover {
+.tab-button:hover {
   color: var(--neon-cyan);
 }
 
-.tab-btn.active {
+.tab-button.active {
   color: var(--neon-cyan);
   border-bottom-color: var(--neon-cyan);
 }
@@ -135,6 +139,55 @@
   margin-top: 10px;
 }
 
+/* Row highlighting for valid/invalid rows */
+.row-valid {
+  background-color: rgba(0, 255, 65, 0.15);
+  border-left: 4px solid var(--neon-lime);
+}
+
+.row-valid:hover {
+  background-color: rgba(0, 255, 65, 0.25);
+}
+
+.row-invalid {
+  background-color: rgba(255, 85, 85, 0.15);
+  border-left: 4px solid #ff5555;
+}
+
+.row-invalid:hover {
+  background-color: rgba(255, 85, 85, 0.25);
+}
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.status-attended {
+  background: rgba(0, 255, 65, 0.25);
+  color: var(--neon-lime);
+  border: 1px solid var(--neon-lime);
+}
+
+.status-not-attended {
+  background: rgba(255, 198, 41, 0.25);
+  color: #ffc629;
+  border: 1px solid #ffc629;
+}
+
+.status-no-show {
+  background: rgba(255, 85, 85, 0.25);
+  color: #ff5555;
+  border: 1px solid #ff5555;
+}
+
 .import-actions {
   display: flex;
   gap: 12px;
@@ -145,7 +198,19 @@
   flex: 1;
 }
 
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .form-group select {
+  width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -180,7 +245,7 @@
     flex-wrap: wrap;
   }
 
-  .tab-btn {
+  .tab-button {
     padding: 10px 12px;
     font-size: 0.875rem;
   }
@@ -202,4 +267,3 @@
     width: 100%;
   }
 }
-

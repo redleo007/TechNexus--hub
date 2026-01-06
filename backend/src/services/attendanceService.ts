@@ -91,3 +91,131 @@ export const getAttendanceStats = async (): Promise<{ attended: number; noShow: 
     noShow: noShowCount || 0,
   };
 };
+
+export const bulkImportAttendance = async (attendanceRecords: Array<{
+  name: string;
+  email: string;
+  event_id: string;
+  attendance_status: 'attended' | 'not_attended' | 'no_show';
+}>): Promise<Attendance[]> => {
+  const supabase = getSupabaseClient();
+  const importedRecords: Attendance[] = [];
+
+  for (const record of attendanceRecords) {
+    try {
+      // Find or create participant
+      let { data: existingParticipant } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('email', record.email)
+        .single();
+
+      let participantId: string;
+      if (existingParticipant) {
+        participantId = existingParticipant.id;
+      } else {
+        // Create new participant
+        const { data: newParticipant, error: participantError } = await supabase
+          .from('participants')
+          .insert([{
+            name: record.name.trim(),
+            email: record.email.trim(),
+            is_blocklisted: false,
+          }])
+          .select()
+          .single();
+
+        if (participantError) throw new Error(`Failed to create participant: ${participantError.message}`);
+        participantId = newParticipant.id;
+      }
+
+      // Check if attendance record already exists for this event
+      const { data: existingAttendance } = await supabase
+        .from('attendance')
+        .select('id')
+        .eq('participant_id', participantId)
+        .eq('event_id', record.event_id)
+        .single();
+
+      let attendanceStatus = 'no_show';
+      if (record.attendance_status === 'attended') {
+        attendanceStatus = 'attended';
+      } else if (record.attendance_status === 'not_attended') {
+        attendanceStatus = 'no_show';
+      }
+
+      if (existingAttendance) {
+        // Update existing attendance
+        const { data: updatedAttendance, error: updateError } = await supabase
+          .from('attendance')
+          .update({ 
+            status: attendanceStatus,
+            marked_at: new Date().toISOString()
+          })
+          .eq('id', existingAttendance.id)
+          .select()
+          .single();
+
+        if (updateError) throw new Error(`Failed to update attendance: ${updateError.message}`);
+        importedRecords.push(updatedAttendance as Attendance);
+      } else {
+        // Create new attendance record
+        const { data: newAttendance, error: insertError } = await supabase
+          .from('attendance')
+          .insert([{
+            event_id: record.event_id,
+            participant_id: participantId,
+            status: attendanceStatus,
+            marked_at: new Date().toISOString(),
+          }])
+          .select()
+          .single();
+
+        if (insertError) throw new Error(`Failed to create attendance: ${insertError.message}`);
+        importedRecords.push(newAttendance as Attendance);
+      }
+
+      // Auto-blocklist if no-show count reaches threshold
+      if (attendanceStatus === 'no_show') {
+        const noShowCount = await getNoShowCount(participantId);
+        if (noShowCount >= 2) {
+          await supabase
+            .from('participants')
+            .update({
+              is_blocklisted: true,
+              blocklist_reason: `Auto-blocklisted: ${noShowCount} no-shows`,
+            })
+            .eq('id', participantId);
+        }
+      }
+    } catch (error) {
+      throw new Error(`Failed to import attendance for "${record.email}": ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  return importedRecords;
+};
+
+export const bulkImportAttendanceBatch = async (attendanceRecords: Array<{
+  name: string;
+  email: string;
+  event_id: string;
+  attendance_status: 'attended' | 'not_attended' | 'no_show';
+}>): Promise<{ imported: number; failed: number; errors: string[] }> => {
+  let imported = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const record of attendanceRecords) {
+    try {
+      await bulkImportAttendance([record]);
+      imported++;
+    } catch (error) {
+      failed++;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      errors.push(`${record.email}: ${errorMsg}`);
+    }
+  }
+
+  return { imported, failed, errors };
+};

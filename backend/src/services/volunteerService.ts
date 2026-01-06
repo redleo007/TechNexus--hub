@@ -6,6 +6,7 @@ export interface Volunteer {
   email: string;
   comment: string;
   place?: string;
+  is_active: boolean;
   joined_date: string;
   created_at: string;
 }
@@ -59,6 +60,20 @@ export const updateVolunteer = async (id: string, updates: Partial<Volunteer>): 
     .single();
 
   if (error) throw new Error(`Failed to update volunteer: ${error.message}`);
+  return data as Volunteer;
+};
+
+export const toggleVolunteerStatus = async (id: string, isActive: boolean): Promise<Volunteer> => {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('volunteers')
+    .update({ is_active: isActive })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to update volunteer status: ${error.message}`);
   return data as Volunteer;
 };
 

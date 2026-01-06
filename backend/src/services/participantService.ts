@@ -33,6 +33,82 @@ export const createParticipant = async (participantData: Omit<Participant, 'id' 
   return data as Participant;
 };
 
+export const createParticipantWithEvent = async (participantData: { full_name: string; eventpass_id: string }): Promise<Participant> => {
+  const supabase = getSupabaseClient();
+  
+  // Create participant with minimal data (full_name becomes name)
+  const { data, error } = await supabase
+    .from('participants')
+    .insert([{
+      name: participantData.full_name.trim(),
+      email: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}@eventpass.local`,
+      is_blocklisted: false,
+    }])
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to create participant: ${error.message}`);
+  
+  // Create attendance record to associate with event
+  const { error: attendanceError } = await supabase
+    .from('attendance')
+    .insert([{
+      event_id: participantData.eventpass_id,
+      participant_id: data.id,
+      status: 'no_show', // Default status
+    }]);
+
+  if (attendanceError) {
+    // Clean up participant if attendance creation fails
+    await supabase.from('participants').delete().eq('id', data.id);
+    throw new Error(`Failed to associate participant with event: ${attendanceError.message}`);
+  }
+
+  return data as Participant;
+};
+
+export const bulkCreateParticipantsWithEvent = async (participantsData: Array<{ full_name: string; event_id: string }>): Promise<Participant[]> => {
+  const supabase = getSupabaseClient();
+  
+  // Prepare all participants for batch insert
+  const participantsToInsert = participantsData.map(p => ({
+    name: p.full_name.trim(),
+    email: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.random().toString(36).substr(2, 3)}@eventpass.local`,
+    is_blocklisted: false,
+  }));
+
+  // Batch insert all participants
+  const { data: createdParticipants, error: insertError } = await supabase
+    .from('participants')
+    .insert(participantsToInsert)
+    .select();
+
+  if (insertError) throw new Error(`Failed to create participants: ${insertError.message}`);
+
+  // Prepare attendance records for batch insert
+  const attendanceRecords = (createdParticipants || []).map((participant, idx) => ({
+    event_id: participantsData[idx].event_id,
+    participant_id: participant.id,
+    status: 'no_show' as const,
+  }));
+
+  // Batch insert all attendance records
+  const { error: attendanceError } = await supabase
+    .from('attendance')
+    .insert(attendanceRecords);
+
+  if (attendanceError) {
+    // Clean up participants if attendance creation fails
+    const participantIds = (createdParticipants || []).map(p => p.id);
+    if (participantIds.length > 0) {
+      await supabase.from('participants').delete().in('id', participantIds);
+    }
+    throw new Error(`Failed to associate participants with event: ${attendanceError.message}`);
+  }
+
+  return createdParticipants as Participant[];
+};
+
 export const getParticipants = async (includeBlocklisted: boolean = false): Promise<Participant[]> => {
   const supabase = getSupabaseClient();
   
