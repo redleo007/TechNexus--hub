@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { successResponse } from '../utils/response';
 import * as participantService from '../services/participantService';
-import * as importSessionService from '../services/importSessionService';
 import { validateParticipantData } from '../utils/validation';
 
 const router = Router();
@@ -62,23 +61,13 @@ router.post(
       }
     }
 
-    // Create import session
-    const event_id = participants[0].event_id; // Use first participant's event_id
-    const importSession = await importSessionService.createImportSession(
-      event_id,
-      'participants',
-      participants.length
-    );
-
-    // Bulk create participants with import session tracking
+    // Bulk create participants
     const result = await participantService.bulkCreateParticipantsWithEvent(
-      participants,
-      importSession.id
+      participants
     );
 
     res.status(201).json(successResponse({ 
       imported: result.length,
-      import_session_id: importSession.id,
       data: result 
     }));
   })

@@ -7,11 +7,13 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 30px;
+  margin-top: 0;
   gap: 20px;
 }
 
 .page-header h1 {
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  margin-top: 0;
   font-size: 2rem;
 }
 
@@ -247,6 +249,87 @@
 }
 
 /* Responsive Design */
+/* Work History Section */
+.work-history-section {
+  margin-top: 30px;
+}
+
+.work-history-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.work-history-section h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+}
+
+.work-history-section p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.work-history-table {
+  overflow-x: auto;
+}
+
+.work-history-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.work-history-table th {
+  background: rgba(0, 217, 255, 0.05);
+  border-bottom: 2px solid rgba(0, 217, 255, 0.2);
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #00d9ff;
+}
+
+.work-history-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.work-history-table tr:hover {
+  background: rgba(0, 217, 255, 0.02);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-assigned {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.badge-in_progress {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.badge-completed {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.empty-state-inline {
+  padding: 30px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -276,6 +359,24 @@
 
   .dropdown-menu {
     max-height: 250px;
+  }
+
+  .work-history-section .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .work-history-section .section-header .btn {
+    width: 100%;
+  }
+
+  .work-history-table {
+    font-size: 0.9rem;
+  }
+
+  .work-history-table th,
+  .work-history-table td {
+    padding: 8px;
   }
 }
 

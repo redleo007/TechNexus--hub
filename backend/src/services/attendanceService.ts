@@ -228,7 +228,7 @@ export const bulkImportAttendanceWithSnapshots = async (
     event_id: string;
     attendance_status: 'attended' | 'not_attended' | 'no_show';
   }>,
-  import_session_id: string
+  import_session_id?: string
 ): Promise<{ imported: number; failed: number; errors: string[] }> => {
   const supabase = getSupabaseClient();
   let imported = 0;

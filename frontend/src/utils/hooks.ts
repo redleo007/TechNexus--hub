@@ -8,7 +8,8 @@ interface UseAsyncState<T> {
 
 export const useAsync = <T,>(
   asyncFunction: () => Promise<T>,
-  immediate = true
+  immediate = true,
+  dependencies: any[] = []
 ): UseAsyncState<T> & { refetch: () => Promise<void> } => {
   const [state, setState] = useState<UseAsyncState<T>>({
     data: null,
@@ -34,7 +35,7 @@ export const useAsync = <T,>(
     if (immediate) {
       execute();
     }
-  }, []);
+  }, dependencies);
 
   return {
     ...state,

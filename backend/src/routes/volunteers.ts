@@ -70,6 +70,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const { volunteer_id, event_id, task_name, task_status } = req.body;
 
+    // Validation errors
     if (!volunteer_id || !event_id || !task_name) {
       return res.status(400).json({ 
         error: 'volunteer_id, event_id, and task_name are required' 
@@ -92,10 +93,20 @@ router.post(
       res.status(201).json(successResponse(workAssignment));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
+      
+      // Explicit error handling - no silent failures
+      if (errorMsg.includes('Volunteer not found')) {
+        return res.status(404).json({ error: `Volunteer ${volunteer_id} not found` });
+      }
+      if (errorMsg.includes('Event not found')) {
+        return res.status(404).json({ error: `Event ${event_id} not found` });
+      }
       if (errorMsg.includes('not found')) {
         return res.status(404).json({ error: errorMsg });
       }
-      throw error;
+      
+      // Database error
+      return res.status(500).json({ error: `Failed to assign work: ${errorMsg}` });
     }
   })
 );
@@ -103,12 +114,18 @@ router.post(
 router.get(
   '/:id/work-history',
   asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ error: 'Volunteer ID is required' });
+    }
+    
     try {
-      const workHistory = await volunteerService.getWorkHistory(req.params.id);
+      const workHistory = await volunteerService.getWorkHistory(id);
       res.json(successResponse(workHistory));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({ error: errorMsg });
+      return res.status(500).json({ error: `Failed to fetch work history: ${errorMsg}` });
     }
   })
 );
@@ -116,12 +133,18 @@ router.get(
 router.delete(
   '/work-assignments/:workId',
   asyncHandler(async (req: Request, res: Response) => {
+    const { workId } = req.params;
+    
+    if (!workId) {
+      return res.status(400).json({ error: 'Work assignment ID is required' });
+    }
+    
     try {
-      await volunteerService.deleteWorkAssignment(req.params.workId);
+      await volunteerService.deleteWorkAssignment(workId);
       res.json(successResponse({ message: 'Work assignment deleted successfully' }));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({ error: errorMsg });
+      return res.status(500).json({ error: `Failed to delete work assignment: ${errorMsg}` });
     }
   })
 );
@@ -129,12 +152,18 @@ router.delete(
 router.delete(
   '/:id/work-history/:eventId',
   asyncHandler(async (req: Request, res: Response) => {
+    const { id, eventId } = req.params;
+    
+    if (!id || !eventId) {
+      return res.status(400).json({ error: 'Volunteer ID and Event ID are required' });
+    }
+    
     try {
-      await volunteerService.deleteAllWorkForEvent(req.params.eventId, req.params.id);
+      await volunteerService.deleteAllWorkForEvent(eventId, id);
       res.json(successResponse({ message: 'All work assignments deleted successfully' }));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      return res.status(500).json({ error: errorMsg });
+      return res.status(500).json({ error: `Failed to delete work assignments: ${errorMsg}` });
     }
   })
 );

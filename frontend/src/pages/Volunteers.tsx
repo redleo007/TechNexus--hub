@@ -55,7 +55,6 @@ export function Volunteers() {
       setWorkHistory(workData);
     } catch (error) {
       // If endpoint doesn't exist yet, show empty state
-      console.log('Work history endpoint not yet available:', error);
       setWorkHistory([]);
     } finally {
       setLoadingWork(false);

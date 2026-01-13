@@ -24,6 +24,16 @@ interface WorkAssignment {
   task_status: 'assigned' | 'in_progress' | 'completed';
 }
 
+interface WorkHistory {
+  id: string;
+  volunteer_id: string;
+  event_id: string;
+  task_name: string;
+  task_status: 'assigned' | 'in_progress' | 'completed';
+  created_at: string;
+  updated_at: string;
+}
+
 export function AssignWork() {
   const [showForm, setShowForm] = useState(false);
   const [searchVolunteer, setSearchVolunteer] = useState('');
@@ -36,6 +46,7 @@ export function AssignWork() {
   });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [refreshWorkHistory, setRefreshWorkHistory] = useState(0);
 
   const { data: volunteers, loading: loadingVolunteers } = useAsync<Volunteer[]>(
     () => volunteersAPI.getAll().then((res) => res.data),
@@ -45,6 +56,13 @@ export function AssignWork() {
   const { data: events, loading: loadingEvents } = useAsync<Event[]>(
     () => eventsAPI.getAll().then((res) => res.data),
     true
+  );
+
+  // Fetch work history for selected volunteer
+  const { data: workHistory = [], loading: loadingHistory } = useAsync<WorkHistory[]>(
+    () => selectedVolunteer ? volunteersAPI.getWorkHistory(selectedVolunteer.id).then((res) => res.data) : Promise.resolve([]),
+    true,
+    [selectedVolunteer?.id, refreshWorkHistory]
   );
 
   const filteredVolunteers = volunteers?.filter((v) =>
@@ -91,27 +109,33 @@ export function AssignWork() {
       };
 
       // Create work assignment using API
-      await volunteersAPI.createWorkAssignment(workData);
+      const result = await volunteersAPI.createWorkAssignment(workData);
+      
+      if (!result) {
+        throw new Error('Failed to create work assignment - no response from server');
+      }
 
       setMessage({ type: 'success', text: 'Work assigned successfully!' });
       
       // Reset form
-      setSelectedVolunteer(null);
-      setSearchVolunteer('');
       setFormData({
         event_id: '',
         task_name: '',
         task_status: 'assigned',
       });
 
+      // Refresh work history immediately
+      setRefreshWorkHistory(prev => prev + 1);
+
       // Close form after 2 seconds
       setTimeout(() => {
         setShowForm(false);
       }, 1500);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Failed to assign work',
+        text: errorMsg || 'Failed to assign work',
       });
     } finally {
       setSubmitting(false);
@@ -120,13 +144,12 @@ export function AssignWork() {
 
   const handleCancel = () => {
     setShowForm(false);
-    setSelectedVolunteer(null);
-    setSearchVolunteer('');
     setFormData({
       event_id: '',
       task_name: '',
       task_status: 'assigned',
     });
+    setMessage(null);
   };
 
   return (
@@ -272,13 +295,74 @@ export function AssignWork() {
         </div>
       )}
 
+      {/* Work History */}
+      {!showForm && selectedVolunteer && (
+        <div className="work-history-section card">
+          <div className="section-header">
+            <div>
+              <h2>Work History</h2>
+              <p>{selectedVolunteer.name} - {selectedVolunteer.email}</p>
+            </div>
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setSelectedVolunteer(null);
+                setSearchVolunteer('');
+              }}
+            >
+              Change Volunteer
+            </button>
+          </div>
+
+          {loadingHistory ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <Loader size={32} className="animate-spin" style={{ margin: '0 auto' }} />
+              <p>Loading work history...</p>
+            </div>
+          ) : workHistory.length === 0 ? (
+            <div className="empty-state-inline">
+              <p>No work assignments yet. Click "Assign Work" above to get started.</p>
+            </div>
+          ) : (
+            <div className="work-history-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Task Name</th>
+                    <th>Event</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workHistory.map((work) => (
+                    <tr key={work.id}>
+                      <td>{work.task_name}</td>
+                      <td>
+                        {events?.find(e => e.id === work.event_id)?.name || work.event_id}
+                      </td>
+                      <td>
+                        <span className={`badge badge-${work.task_status}`}>
+                          {work.task_status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td>{formatDate(work.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Empty State */}
-      {!showForm && (
+      {!showForm && !selectedVolunteer && (
         <div className="empty-state card">
           <div className="empty-state-content">
             <CheckCircle size={48} />
-            <h3>No form shown</h3>
-            <p>Click "Assign Work" to create a new work assignment for a volunteer</p>
+            <h3>Assign Work to Volunteers</h3>
+            <p>Select a volunteer from the form above to view their work history and assign new tasks</p>
           </div>
         </div>
       )}

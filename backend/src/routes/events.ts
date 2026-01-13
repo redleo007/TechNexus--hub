@@ -3,7 +3,6 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { successResponse, errorResponse } from '../utils/response';
 import * as eventService from '../services/eventService';
 import * as volunteerAttendanceService from '../services/volunteerAttendanceService';
-import * as importSessionService from '../services/importSessionService';
 import { validateEventData } from '../utils/validation';
 
 const router = Router();
@@ -111,21 +110,13 @@ router.post(
     }
 
     try {
-      // Create import session
-      const importSession = await importSessionService.createImportSession(
-        event_id,
-        'volunteer_attendance',
-        validatedRecords.length
-      );
-
-      // Bulk import with session tracking
-      const result = await volunteerAttendanceService.bulkImportAttendance(validatedRecords, importSession.id);
+      // Bulk import
+      const result = await volunteerAttendanceService.bulkImportAttendance(validatedRecords);
 
       res.status(201).json(successResponse({
         imported: result.imported,
         failed: result.failed,
         errors: result.errors,
-        import_session_id: importSession.id,
         records: result.records
       }));
     } catch (error) {

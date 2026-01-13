@@ -119,7 +119,6 @@ export function EventsHistory() {
         setVolunteerAttendance(transformedData);
       } catch (error) {
         // If endpoint doesn't exist yet, show empty state
-        console.log('Volunteer attendance endpoint not yet available:', error);
         setVolunteerAttendance([]);
       } finally {
         setLoadingVolunteers(false);
