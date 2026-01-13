@@ -12,10 +12,8 @@ import blocklistRouter from './routes/blocklist';
 import volunteersRouter from './routes/volunteers';
 import settingsRouter from './routes/settings';
 import dashboardRouter from './routes/dashboard';
-import importsRouter from './routes/imports';
 import eventParticipantsRouter from './routes/eventParticipants';
 import volunteerAttendanceRouter from './routes/volunteerAttendance';
-import volunteerAttendanceImportRouter from './routes/volunteerAttendanceImport';
 
 dotenv.config();
 
@@ -47,12 +45,10 @@ app.use('/api/events', eventsRouter);
 app.use('/api/participants', participantsRouter);
 app.use('/api/attendance', attendanceRouter);
 app.use('/api/blocklist', blocklistRouter);
-app.use('/api/volunteer-attendance', volunteerAttendanceImportRouter);
 app.use('/api/volunteers/:volunteer_id/attendance', volunteerAttendanceRouter);
 app.use('/api/volunteers', volunteersRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/dashboard', dashboardRouter);
-app.use('/api/imports', importsRouter);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

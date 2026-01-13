@@ -64,4 +64,79 @@ router.delete(
   })
 );
 
+// Work assignment routes
+router.post(
+  '/work-assignments',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { volunteer_id, event_id, task_name, task_status } = req.body;
+
+    if (!volunteer_id || !event_id || !task_name) {
+      return res.status(400).json({ 
+        error: 'volunteer_id, event_id, and task_name are required' 
+      });
+    }
+
+    if (task_status && !['assigned', 'in_progress', 'completed'].includes(task_status)) {
+      return res.status(400).json({ 
+        error: 'task_status must be one of: assigned, in_progress, completed' 
+      });
+    }
+
+    try {
+      const workAssignment = await volunteerService.createWorkAssignment({
+        volunteer_id,
+        event_id,
+        task_name,
+        task_status: task_status || 'assigned'
+      });
+      res.status(201).json(successResponse(workAssignment));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (errorMsg.includes('not found')) {
+        return res.status(404).json({ error: errorMsg });
+      }
+      throw error;
+    }
+  })
+);
+
+router.get(
+  '/:id/work-history',
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const workHistory = await volunteerService.getWorkHistory(req.params.id);
+      res.json(successResponse(workHistory));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return res.status(500).json({ error: errorMsg });
+    }
+  })
+);
+
+router.delete(
+  '/work-assignments/:workId',
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      await volunteerService.deleteWorkAssignment(req.params.workId);
+      res.json(successResponse({ message: 'Work assignment deleted successfully' }));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return res.status(500).json({ error: errorMsg });
+    }
+  })
+);
+
+router.delete(
+  '/:id/work-history/:eventId',
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      await volunteerService.deleteAllWorkForEvent(req.params.eventId, req.params.id);
+      res.json(successResponse({ message: 'All work assignments deleted successfully' }));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return res.status(500).json({ error: errorMsg });
+    }
+  })
+);
+
 export default router;

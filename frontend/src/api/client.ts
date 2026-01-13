@@ -60,14 +60,6 @@ export const blocklistAPI = {
   remove: (participantId: string) => api.delete(`/blocklist/${participantId}`),
 };
 
-// Imports API
-export const importsAPI = {
-  getByEvent: (eventId: string, days: number = 30) => api.get('/imports', { params: { event_id: eventId, days } }),
-  getHistoryLast30Days: (eventId: string) => api.get('/imports', { params: { event_id: eventId, days: 30 } }),
-  getSession: (sessionId: string) => api.get(`/imports/${sessionId}`),
-  delete: (sessionId: string) => api.delete(`/imports/${sessionId}`),
-};
-
 // Volunteers API
 export const volunteersAPI = {
   create: (data: any) => api.post('/volunteers', data),
@@ -87,15 +79,15 @@ export const volunteersAPI = {
     api.delete(`/volunteer-attendance/${volunteerAttendanceId}`),
   deleteAllAttendanceForEvent: (eventId: string) => 
     api.delete(`/events/${eventId}/volunteer-attendance`),
-  bulkImportAttendance: (data: any) => 
-    api.post('/volunteer-attendance/bulk-import', data),
+  bulkImportAttendance: (eventId: string, data: any) => 
+    api.post(`/events/${eventId}/volunteer-attendance/import`, data),
   // Volunteer work assignments
   getWorkHistory: (volunteerId: string) =>
     api.get(`/volunteers/${volunteerId}/work-history`),
   createWorkAssignment: (data: any) => 
-    api.post('/volunteer-work', data),
+    api.post('/volunteers/work-assignments', data),
   deleteWorkAssignment: (workId: string) => 
-    api.delete(`/volunteer-work/${workId}`),
+    api.delete(`/volunteers/work-assignments/${workId}`),
   deleteAllWorkForEvent: (eventId: string, volunteerId: string) =>
     api.delete(`/volunteers/${volunteerId}/work-history/${eventId}`),
 };

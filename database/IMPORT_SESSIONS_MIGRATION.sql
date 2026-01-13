@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS import_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  import_type TEXT NOT NULL CHECK (import_type IN ('participants', 'attendance')),
+  import_type TEXT NOT NULL CHECK (import_type IN ('participants', 'attendance', 'volunteer_attendance')),
   status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed', 'rolled_back')),
   record_count INTEGER NOT NULL DEFAULT 0,
   uploaded_at TIMESTAMP DEFAULT NOW(),
@@ -52,3 +52,7 @@ CREATE TABLE IF NOT EXISTS attendance_snapshots (
 CREATE INDEX idx_attendance_snapshots_session ON attendance_snapshots(import_session_id);
 CREATE INDEX idx_attendance_snapshots_participant ON attendance_snapshots(participant_id);
 CREATE INDEX idx_attendance_snapshots_event ON attendance_snapshots(event_id);
+
+-- Add import_session_id to volunteer_attendance
+ALTER TABLE volunteer_attendance ADD COLUMN import_session_id UUID REFERENCES import_sessions(id) ON DELETE SET NULL;
+CREATE INDEX idx_volunteer_attendance_import_session ON volunteer_attendance(import_session_id);

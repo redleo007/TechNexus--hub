@@ -3,7 +3,7 @@ import { getSupabaseClient } from '../utils/supabase';
 export interface ImportSession {
   id: string;
   event_id: string;
-  import_type: 'participants' | 'attendance';
+  import_type: 'participants' | 'attendance' | 'volunteer_attendance';
   status: 'pending' | 'completed' | 'failed' | 'rolled_back';
   record_count: number;
   uploaded_at: string;
@@ -23,7 +23,7 @@ export interface ImportAuditLog {
 // Create a new import session
 export const createImportSession = async (
   event_id: string,
-  import_type: 'participants' | 'attendance',
+  import_type: 'participants' | 'attendance' | 'volunteer_attendance',
   record_count: number
 ): Promise<ImportSession> => {
   const supabase = getSupabaseClient();
@@ -46,14 +46,21 @@ export const createImportSession = async (
 };
 
 // Get import sessions for an event
-export const getImportSessions = async (event_id: string): Promise<ImportSession[]> => {
+export const getImportSessions = async (event_id: string, daysBack?: number): Promise<ImportSession[]> => {
   const supabase = getSupabaseClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('import_sessions')
     .select('*')
-    .eq('event_id', event_id)
-    .order('created_at', { ascending: false });
+    .eq('event_id', event_id);
+
+  if (daysBack) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+    query = query.gte('created_at', cutoffDate.toISOString());
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) throw new Error(`Failed to fetch import sessions: ${error.message}`);
   return (data || []) as ImportSession[];
@@ -247,5 +254,79 @@ export const revertAttendanceImport = async (import_session_id: string): Promise
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { reverted: 0, error: message };
+  }
+};
+
+// Delete volunteer attendance import (hard delete - no snapshots for volunteer attendance)
+export const deleteVolunteerAttendanceImport = async (import_session_id: string): Promise<{ deleted: number; error?: string }> => {
+  try {
+    const supabase = getSupabaseClient();
+
+    // Get the session to verify it exists and get record count
+    const session = await getImportSession(import_session_id);
+    if (!session) {
+      return { deleted: 0, error: 'Import session not found' };
+    }
+
+    if (session.import_type !== 'volunteer_attendance') {
+      return { deleted: 0, error: 'Session is not a volunteer attendance import' };
+    }
+
+    // Check if session is too old (30 days limit)
+    const sessionDate = new Date(session.created_at);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    if (sessionDate < thirtyDaysAgo) {
+      return { deleted: 0, error: 'Import history is only available for the last 30 days. This import cannot be deleted.' };
+    }
+
+    // Get all volunteer attendance records created by this session
+    // Since volunteer attendance doesn't have snapshots, we need to find records by creation time
+    // This is approximate - we'll delete records created around the same time as the session
+    const sessionTime = new Date(session.created_at);
+    const timeWindowStart = new Date(sessionTime.getTime() - 60000); // 1 minute before
+    const timeWindowEnd = new Date(sessionTime.getTime() + (session.record_count * 1000)); // Allow time based on record count
+
+    const { data: recordsToDelete, error: fetchError } = await supabase
+      .from('volunteer_attendance')
+      .select('id')
+      .gte('created_at', timeWindowStart.toISOString())
+      .lte('created_at', timeWindowEnd.toISOString())
+      .limit(session.record_count + 10); // Add some buffer
+
+    if (fetchError) {
+      return { deleted: 0, error: `Failed to fetch records: ${fetchError.message}` };
+    }
+
+    if (!recordsToDelete || recordsToDelete.length === 0) {
+      return { deleted: 0, error: 'No matching records found to delete' };
+    }
+
+    // Delete the records
+    const { error: deleteError } = await supabase
+      .from('volunteer_attendance')
+      .delete()
+      .in('id', recordsToDelete.map(r => r.id));
+
+    if (deleteError) {
+      return { deleted: 0, error: `Failed to delete records: ${deleteError.message}` };
+    }
+
+    // Mark session as rolled back
+    await supabase
+      .from('import_sessions')
+      .update({ status: 'rolled_back', rolled_back_at: new Date().toISOString() })
+      .eq('id', import_session_id);
+
+    // Log the deletion
+    await createAuditLog(import_session_id, 'rolled_back', { 
+      deleted: recordsToDelete.length
+    });
+
+    return { deleted: recordsToDelete.length };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { deleted: 0, error: message };
   }
 };

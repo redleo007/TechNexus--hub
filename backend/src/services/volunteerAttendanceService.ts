@@ -187,7 +187,7 @@ export async function getVolunteerAttendanceStats(volunteerId: string): Promise<
 /**
  * Bulk import volunteer attendance records
  */
-export async function bulkImportAttendance(records: any[]): Promise<any> {
+export async function bulkImportAttendance(records: any[], importSessionId?: string): Promise<any> {
   const supabase = getSupabaseClient();
 
   if (!records || records.length === 0) {
@@ -246,14 +246,20 @@ export async function bulkImportAttendance(records: any[]): Promise<any> {
         }
       } else {
         // Insert
+        const insertData: any = {
+          volunteer_id: volunteerData.id,
+          event_id,
+          attendance_status,
+          created_at: new Date().toISOString()
+        };
+        
+        if (importSessionId) {
+          insertData.import_session_id = importSessionId;
+        }
+
         const { data, error } = await supabase
           .from('volunteer_attendance')
-          .insert({
-            volunteer_id: volunteerData.id,
-            event_id,
-            attendance_status,
-            created_at: new Date().toISOString()
-          })
+          .insert(insertData)
           .select()
           .single();
 

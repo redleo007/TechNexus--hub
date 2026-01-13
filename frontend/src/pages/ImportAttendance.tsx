@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2, Loader, CheckCircle, AlertTriangle, Check } from 'lucide-react';
 import Papa from 'papaparse';
-import { participantsAPI, attendanceAPI, eventsAPI, importsAPI, volunteersAPI } from '../api/client';
+import { participantsAPI, attendanceAPI, eventsAPI, volunteersAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import './ImportAttendance.css';
 
@@ -22,15 +22,6 @@ interface Event {
   date: string;
 }
 
-interface ImportSession {
-  id: string;
-  event_id: string;
-  import_type: 'participants' | 'attendance';
-  status: string;
-  record_count: number;
-  uploaded_at: string;
-}
-
 interface Participant {
   id: string;
   name: string;
@@ -46,7 +37,7 @@ interface AttendanceRecord {
 }
 
 export function ImportAttendance() {
-  const [activeTab, setActiveTab] = useState<'participants' | 'attendance' | 'volunteer_attendance' | 'history' | 'delete'>('participants');
+  const [activeTab, setActiveTab] = useState<'participants' | 'attendance' | 'volunteer_attendance' | 'delete'>('participants');
   
   // Participants import state
   const [selectedEventParticipants, setSelectedEventParticipants] = useState<string>('');
@@ -83,22 +74,6 @@ export function ImportAttendance() {
     deleteAll: false,
     count: 0,
   });
-
-  // History state
-  const [importSessions, setImportSessions] = useState<ImportSession[]>([]);
-  const [selectedHistoryEvent, setSelectedHistoryEvent] = useState<string>('');
-  const [deleteImportConfirmation, setDeleteImportConfirmation] = useState<{
-    isOpen: boolean;
-    sessionId: string;
-    importType: string;
-    recordCount: number;
-  }>({
-    isOpen: false,
-    sessionId: '',
-    importType: '',
-    recordCount: 0,
-  });
-  const [isDeletingImport, setIsDeletingImport] = useState(false);
 
   const { data: events } = useAsync<Event[]>(
     () => eventsAPI.getAll().then((res) => res.data),
@@ -421,102 +396,6 @@ export function ImportAttendance() {
   void handleDeleteSelectedAttendance;
   void performDelete;
 
-  // Load import history for an event (last 30 days)
-  const loadImportHistory = async (eventId: string) => {
-    if (!eventId) {
-      setImportSessions([]);
-      return;
-    }
-
-    try {
-      const response = await importsAPI.getByEvent(eventId);
-      const sessions = Array.isArray(response.data) ? response.data : [];
-      
-      // Filter to last 30 days and sort by newest first
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const filteredSessions = sessions
-        .filter((session: ImportSession) => new Date(session.uploaded_at) >= thirtyDaysAgo)
-        .sort((a: ImportSession, b: ImportSession) => 
-          new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
-        );
-      
-      setImportSessions(filteredSessions);
-    } catch (error) {
-      console.error('Failed to load import history:', error);
-      setParticipantMessage({
-        type: 'error',
-        text: 'Failed to load import history. Please try again.'
-      });
-      setImportSessions([]);
-    }
-  };
-
-  // Handle import history event selection
-  const handleHistoryEventChange = (eventId: string) => {
-    setSelectedHistoryEvent(eventId);
-    loadImportHistory(eventId);
-  };
-
-  // Delete/rollback an import session
-  const handleDeleteImport = async (sessionId: string) => {
-    setIsDeletingImport(true);
-
-    try {
-      // Find the session to check if it's still within 30 days
-      const session = importSessions.find(s => s.id === sessionId);
-      if (!session) {
-        throw new Error('Import session not found');
-      }
-
-      const uploadDate = new Date(session.uploaded_at);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      if (uploadDate < thirtyDaysAgo) {
-        throw new Error('Cannot delete imports older than 30 days');
-      }
-
-      await importsAPI.delete(sessionId);
-      
-      // Reload history
-      if (selectedHistoryEvent) {
-        loadImportHistory(selectedHistoryEvent);
-      }
-
-      setDeleteImportConfirmation({
-        isOpen: false,
-        sessionId: '',
-        importType: '',
-        recordCount: 0,
-      });
-      
-      // Show success message with details
-      const successMsg = session.import_type === 'participants'
-        ? `Successfully deleted ${session.record_count} participants from the import.`
-        : `Successfully reverted ${session.record_count} attendance records. All related data has been restored to its previous state.`;
-      
-      alert(successMsg);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      
-      // Provide user-friendly error messages
-      let displayMsg = errorMsg;
-      if (errorMsg.includes('not found')) {
-        displayMsg = 'The import session could not be found. It may have already been deleted.';
-      } else if (errorMsg.includes('30 days')) {
-        displayMsg = 'Import history is only available for the last 30 days. This import cannot be deleted.';
-      } else if (errorMsg.includes('transaction') || errorMsg.includes('failed')) {
-        displayMsg = 'The delete operation failed. Please ensure the import still exists and try again.';
-      }
-      
-      alert(`Failed to delete import: ${displayMsg}`);
-    } finally {
-      setIsDeletingImport(false);
-    }
-  };
-
   // Import participants
   const handleImportParticipants = async () => {
     if (participantFileData.length === 0) {
@@ -662,7 +541,7 @@ export function ImportAttendance() {
 
     try {
       // Send all volunteer attendance records in one bulk request
-      const response = await volunteersAPI.bulkImportAttendance({
+      const response = await volunteersAPI.bulkImportAttendance(selectedEventVolunteerAttendance, {
         records: volunteerAttendanceFileData.map(row => ({
           name: row.name.trim(),
           email: row.email.trim(),
@@ -717,12 +596,6 @@ export function ImportAttendance() {
             onClick={() => setActiveTab('volunteer_attendance')}
           >
             Import Volunteer Attendance
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            Import History
           </button>
           <button
             className={`tab-button ${activeTab === 'delete' ? 'active' : ''}`}
@@ -987,7 +860,6 @@ export function ImportAttendance() {
           <div className="import-section">
             <div className="section-header">
               <h2>Import Volunteer Attendance</h2>
-              <p>Upload a CSV file with volunteer attendance data (name, email, status)</p>
             </div>
 
             {/* Event Selector */}
@@ -1029,25 +901,47 @@ export function ImportAttendance() {
             {/* Data Preview and Import */}
             {volunteerAttendanceFileData.length > 0 && (
               <>
-                <div className="data-preview">
-                  <h3>Preview ({volunteerAttendanceFileData.length} rows)</h3>
-                  <div className="preview-table">
-                    {volunteerAttendanceFileData.slice(0, 5).map((row, idx) => (
-                      <div key={idx} className="preview-row">
-                        <strong>{row.name}</strong>
-                        {' '}
-                        <span className="text-muted">({row.email})</span>
-                        {row.status && (
-                          <span className={`status-badge ${getStatusBadgeColor(normalizeStatus(row.status))}`}>
-                            {getStatusLabel(normalizeStatus(row.status))}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                <div className="preview-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0 }}>Preview ({volunteerAttendanceFileData.length} rows)</h3>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => setVolunteerAttendanceFileData([])}
+                      title="Delete and remove this file from preview"
+                      disabled={importingVolunteerAttendance}
+                    >
+                      <Trash2 size={16} /> Delete Preview
+                    </button>
                   </div>
-                  {volunteerAttendanceFileData.length > 5 && (
-                    <p className="text-muted">... and {volunteerAttendanceFileData.length - 5} more rows</p>
-                  )}
+                  <div className="table-wrapper">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Attendance Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {volunteerAttendanceFileData.map((row, idx) => {
+                          const status = normalizeStatus(row.status);
+                          const isValid = isValidAttendanceRow(row);
+                          return (
+                            <tr key={idx} className={isValid ? 'row-valid' : 'row-invalid'}>
+                              <td>{row.name}</td>
+                              <td>{row.email}</td>
+                              <td>
+                                <span className={`badge ${getStatusBadgeColor(status)}`}>
+                                  {getStatusLabel(status)}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <div className="import-actions">
@@ -1068,164 +962,6 @@ export function ImportAttendance() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* History Tab */}
-      {activeTab === 'history' && (
-        <div className="tab-content card">
-          <div className="history-header">
-            <h2>Import History</h2>
-          </div>
-
-          {/* Event Selector */}
-          <div className="event-selector">
-            <label htmlFor="history-event-select">Select Event:</label>
-            <select
-              id="history-event-select"
-              value={selectedHistoryEvent}
-              onChange={(e) => handleHistoryEventChange(e.target.value)}
-            >
-              <option value="">-- Choose an event --</option>
-              {events && events.map((event) => (
-                <option key={event.id} value={event.id}>
-                  {event.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Import Sessions Table */}
-          {selectedHistoryEvent && (
-            <>
-              {importSessions.length === 0 ? (
-                <p className="history-empty">
-                  No import history for this event.
-                </p>
-              ) : (
-                <div className="history-table-wrapper">
-                  <table className="history-table">
-                    <thead>
-                      <tr>
-                        <th>Type</th>
-                        <th>Date & Time</th>
-                        <th>Records</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'center' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {importSessions.map((session) => (
-                        <tr 
-                          key={session.id}
-                          className={session.status === 'reverted' ? 'reverted' : ''}
-                        >
-                          <td>
-                            <span className={`history-type-badge history-type-${session.import_type}`}>
-                              {session.import_type === 'participants' ? 'Participants' : 'Attendance'}
-                            </span>
-                          </td>
-                          <td>
-                            {new Date(session.uploaded_at).toLocaleString()}
-                          </td>
-                          <td>
-                            {session.record_count} records
-                          </td>
-                          <td>
-                            <span className={`history-status-badge history-status-${session.status}`}>
-                              {session.status === 'reverted' ? 'Reverted' : 'Active'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            {session.status === 'active' && (
-                              <button
-                                className="history-delete-btn"
-                                onClick={() => setDeleteImportConfirmation({
-                                  isOpen: true,
-                                  sessionId: session.id,
-                                  importType: session.import_type,
-                                  recordCount: session.record_count
-                                })}
-                                disabled={isDeletingImport}
-                              >
-                                {isDeletingImport ? 'Deleting...' : 'Delete'}
-                              </button>
-                            )}
-                            {session.status === 'reverted' && (
-                              <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                Reverted
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-
-          {!selectedHistoryEvent && (
-            <p className="history-placeholder">
-              Select an event above to view its import history.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteImportConfirmation.isOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Delete Import?</h3>
-            </div>
-            
-            <div className="modal-warning">
-              <strong><AlertTriangle size={16} style={{ display: 'inline', marginRight: '8px' }} /> Warning:</strong> This action will permanently remove all {deleteImportConfirmation.importType === 'participants' ? 'participants and their associated' : ''} {deleteImportConfirmation.importType === 'participants' ? 'attendance records' : 'attendance data'} from this import. 
-              {deleteImportConfirmation.importType === 'attendance' && ' Previous attendance states will be restored.'}
-              <br /><br />
-              <strong>This action cannot be undone.</strong>
-            </div>
-
-            <div className="modal-details">
-              <p>
-                <strong>Type:</strong> {deleteImportConfirmation.importType === 'participants' ? 'Participants' : 'Attendance'}
-              </p>
-              <p>
-                <strong>Records:</strong> {deleteImportConfirmation.recordCount}
-              </p>
-              <p>
-                <strong>Impact:</strong> {deleteImportConfirmation.importType === 'participants' 
-                  ? `${deleteImportConfirmation.recordCount} participant records and their attendance history will be permanently removed.`
-                  : `${deleteImportConfirmation.recordCount} attendance records will be reverted. Participants will be restored to their previous status, and blocklist entries will be rolled back if applicable.`
-                }
-              </p>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="modal-btn modal-btn-cancel"
-                onClick={() => setDeleteImportConfirmation({
-                  isOpen: false,
-                  sessionId: '',
-                  importType: '',
-                  recordCount: 0,
-                })}
-                disabled={isDeletingImport}
-              >
-                Cancel
-              </button>
-              <button
-                className="modal-btn modal-btn-delete"
-                onClick={() => handleDeleteImport(deleteImportConfirmation.sessionId)}
-                disabled={isDeletingImport}
-              >
-                {isDeletingImport ? 'Deleting...' : 'Delete Import'}
-              </button>
-            </div>
           </div>
         </div>
       )}
