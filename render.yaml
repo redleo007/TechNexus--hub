@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: technexus-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+
+  - type: static
+    name: technexus-frontend
+    staticPublishPath: ./frontend/dist
+    buildCommand: cd frontend && npm install && npm run build
+    envVars:
+      - key: VITE_API_URL
+        value: https://technexus-backend.onrender.com
