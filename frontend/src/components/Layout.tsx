@@ -102,7 +102,7 @@ export function Layout({ children, onLogout }: LayoutProps) {
             {children}
           </div>
           <footer className="footer">
-            <p>&copy; 2025 TechNexus. Production-Ready Event Management System.</p>
+            <p>&copy; 2025 TechNexus Community. Production-Ready Event Management System.</p>
           </footer>
         </main>
       </div>

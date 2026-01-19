@@ -33,7 +33,7 @@ export function Navbar({ onLogout, onSidebarToggle }: NavbarProps) {
         
         <Link to="/" className="brand-link">
           <img src="/logo.svg" alt="TechNexus" className="brand-icon" />
-          <span className="brand-text">TechNexus</span>
+          <span className="brand-text">TechNexus Community</span>
         </Link>
       </div>
 

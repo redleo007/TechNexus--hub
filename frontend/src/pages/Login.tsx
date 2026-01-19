@@ -41,7 +41,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
           <div className="login-header">
             <div className="login-brand">
               <img src="/logo.svg" alt="TechNexus Logo" className="brand-icon" />
-              <span className="brand-name">TechNexus</span>
+              <span className="brand-name">TechNexus Community</span>
             </div>
             <h1>Admin Login</h1>
             <p>Event & Attendance Management System</p>
