@@ -4,14 +4,12 @@ import {
   Users,
   AlertCircle,
   Ban,
-  UserCog,
   BarChart3,
   CheckCircle,
   RefreshCcw,
   Settings,
 } from 'lucide-react';
-import { dashboardAPI, eventsAPI, participantsAPI, volunteersAPI, blocklistAPI, attendanceAPI } from '../api/client';
-import { AttendanceStatusBadge } from '../components/AttendanceStatusBadge';
+import { dashboardAPI, eventsAPI, participantsAPI, blocklistAPI, attendanceAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import { formatDateTime, formatDate } from '../utils/formatters';
 import './Dashboard.css';
@@ -36,11 +34,6 @@ interface Participant {
   is_blocklisted: boolean;
 }
 
-interface Volunteer {
-  id: string;
-  name: string;
-}
-
 interface AttendanceRecord {
   id: string;
   participant_id: string;
@@ -49,8 +42,6 @@ interface AttendanceRecord {
 
 export function Dashboard() {
   const [latestEventStats, setLatestEventStats] = useState<any>(null);
-  const [volunteerAttendance, setVolunteerAttendance] = useState<any[]>([]);
-  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
   const { data: stats, loading, error, refetch } = useAsync<DashboardStats>(
     () => dashboardAPI.getStats().then((res) => res.data),
@@ -67,36 +58,10 @@ export function Dashboard() {
     true
   );
 
-  const { data: volunteers } = useAsync<Volunteer[]>(
-    () => volunteersAPI.getAll().then((res) => res.data),
-    true
-  );
-
   const { data: blocklist } = useAsync(
     () => blocklistAPI.getAll().then((res) => res.data),
     true
   );
-
-  // Load volunteer attendance overview
-  useEffect(() => {
-    if (!volunteers || volunteers.length === 0) return;
-
-    const loadVolunteerAttendance = async () => {
-      setLoadingAttendance(true);
-      try {
-        // Volunteer attendance data is loaded from events when attendance is imported
-        // This section can be extended to show volunteer activity
-        setVolunteerAttendance([]);
-      } catch (error) {
-        console.error('Failed to load volunteer attendance:', error);
-        setVolunteerAttendance([]);
-      } finally {
-        setLoadingAttendance(false);
-      }
-    };
-
-    loadVolunteerAttendance();
-  }, [volunteers]);
 
   // Load latest event attendance
   useEffect(() => {
@@ -232,15 +197,6 @@ export function Dashboard() {
             <p className="stat-label">{blocklist?.length || 0} on blocklist</p>
           </div>
         </div>
-
-        <div className="stat-card stat-card-volunteer">
-          <div className="stat-icon"><UserCog size={24} /></div>
-          <div className="stat-content">
-            <h3>Volunteers</h3>
-            <p className="stat-value">{volunteers?.length || 0}</p>
-            <p className="stat-label">Active volunteers</p>
-          </div>
-        </div>
       </div>
 
       {/* Latest Event Overview */}
@@ -329,64 +285,6 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Volunteer Attendance Overview */}
-      <div className="volunteer-attendance-section card">
-        <div className="section-header">
-          <h2>Volunteer Attendance Overview</h2>
-          <button className="btn btn-secondary btn-sm" onClick={() => setVolunteerAttendance([])}>
-            <RefreshCcw size={16} />
-            Refresh
-          </button>
-        </div>
-
-        {loadingAttendance ? (
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Loading attendance data...</p>
-          </div>
-        ) : volunteerAttendance.length > 0 ? (
-          <div className="volunteer-attendance-list">
-            {volunteerAttendance.map(({ volunteer, attendance }) => (
-              <div key={volunteer.id} className="volunteer-attendance-item">
-                <h3>{volunteer.name}</h3>
-                {attendance && attendance.length > 0 ? (
-                  <div className="attendance-group">
-                    {attendance.map((record: any) => (
-                      <div key={record.id} className="attendance-record" style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #eee'
-                      }}>
-                        <div>
-                          <p style={{ fontSize: '0.9rem', marginBottom: '4px' }}>
-                            {record.event_name || 'Unknown Event'}
-                          </p>
-                          <p style={{ fontSize: '0.8rem', color: '#999' }}>
-                            {formatDate(record.date || record.created_at)}
-                          </p>
-                        </div>
-                        <AttendanceStatusBadge 
-                          status={record.status === 'attended' ? 'attended' : 'no_show'} 
-                          size="sm"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ color: '#999', fontSize: '0.9rem' }}>No recent attendance records</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <p>No volunteer attendance data available</p>
-          </div>
-        )}
-      </div>
-
       {/* Quick Links */}
       <div className="quick-actions">
         <h2>Quick Actions</h2>
@@ -424,13 +322,6 @@ export function Dashboard() {
             <div className="action-text">
               <h4>Blocklist</h4>
               <p>{stats?.blocklistedParticipants || 0} users</p>
-            </div>
-          </a>
-          <a href="/volunteers" className="action-card">
-            <div className="action-icon"><UserCog size={24} /></div>
-            <div className="action-text">
-              <h4>Volunteers</h4>
-              <p>{volunteers?.length || 0} registered</p>
             </div>
           </a>
           <a href="/settings" className="action-card">

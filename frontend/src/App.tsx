@@ -5,11 +5,8 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Events } from './pages/Events';
 import { EventsHistory } from './pages/EventsHistory';
-import { ImportAttendance } from './pages/ImportAttendance';
 import { NoShows } from './pages/NoShows';
 import { Blocklist } from './pages/Blocklist';
-import { Volunteers } from './pages/Volunteers';
-import { AssignWork } from './pages/AssignWork';
 import { Settings } from './pages/Settings';
 import './styles/index.css';
 
@@ -68,11 +65,8 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events-history" element={<EventsHistory />} />
-          <Route path="/import" element={<ImportAttendance />} />
-          <Route path="/assign-work" element={<AssignWork />} />
           <Route path="/no-shows" element={<NoShows />} />
           <Route path="/blocklist" element={<Blocklist />} />
-          <Route path="/volunteers" element={<Volunteers />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { successResponse } from '../utils/response';
 import * as attendanceService from '../services/attendanceService';
-import * as importSessionService from '../services/importSessionService';
 import { checkAndAutoBlock } from '../services/blocklistService';
 
 const router = Router();
@@ -25,25 +24,13 @@ router.post(
       }
     }
 
-    // Create import session
-    const event_id = records[0].event_id; // Use first record's event_id
-    const importSession = await importSessionService.createImportSession(
-      event_id,
-      'attendance',
-      records.length
-    );
-
-    // Bulk import with snapshot tracking
-    const result = await attendanceService.bulkImportAttendanceWithSnapshots(
-      records,
-      importSession.id
-    );
+    // Bulk import attendance
+    const result = await attendanceService.bulkImportAttendance(records);
 
     res.status(201).json(successResponse({
-      imported: result.imported,
-      failed: result.failed,
-      errors: result.errors,
-      import_session_id: importSession.id,
+      imported: result.length,
+      failed: 0,
+      errors: [],
     }));
   })
 );

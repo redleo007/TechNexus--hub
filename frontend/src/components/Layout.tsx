@@ -2,13 +2,10 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Upload,
   Calendar,
   History,
   Ban,
   AlertCircle,
-  Users,
-  ClipboardList,
   Settings,
 } from 'lucide-react';
 import { Navbar } from './Navbar';
@@ -22,13 +19,10 @@ interface NavLink {
 
 const mainNavLinks: NavLink[] = [
   { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-  { path: '/import', label: 'Import & Attendance', icon: <Upload size={20} /> },
   { path: '/events', label: 'Events', icon: <Calendar size={20} /> },
   { path: '/events-history', label: 'Events history', icon: <History size={20} /> },
-  { path: '/assign-work', label: 'Assign Work', icon: <ClipboardList size={20} /> },
   { path: '/blocklist', label: 'Blocklist', icon: <Ban size={20} /> },
   { path: '/no-shows', label: 'No Shows', icon: <AlertCircle size={20} /> },
-  { path: '/volunteers', label: 'Volunteers', icon: <Users size={20} /> },
   { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 

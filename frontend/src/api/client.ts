@@ -68,38 +68,6 @@ export const importsAPI = {
   delete: (sessionId: string) => api.delete(`/imports/${sessionId}`),
 };
 
-// Volunteers API
-export const volunteersAPI = {
-  create: (data: any) => api.post('/volunteers', data),
-  getAll: (sort: 'newest' | 'oldest' = 'newest') =>
-    api.get('/volunteers', { params: { sort } }),
-  getById: (id: string) => api.get(`/volunteers/${id}`),
-  update: (id: string, data: any) => api.put(`/volunteers/${id}`, data),
-  toggleStatus: (id: string, isActive: boolean) =>
-    api.patch(`/volunteers/${id}/toggle-status`, { is_active: isActive }),
-  delete: (id: string) => api.delete(`/volunteers/${id}`),
-  // Volunteer attendance tracking - uses imported attendance data
-  getAttendanceByEvent: (eventId: string) => 
-    api.get(`/events/${eventId}/volunteer-attendance`),
-  getRecentAttendance: (volunteerId: string, limit: number = 5) =>
-    api.get(`/volunteers/${volunteerId}/recent-attendance`, { params: { limit } }),
-  deleteAttendance: (volunteerAttendanceId: string) => 
-    api.delete(`/volunteer-attendance/${volunteerAttendanceId}`),
-  deleteAllAttendanceForEvent: (eventId: string) => 
-    api.delete(`/events/${eventId}/volunteer-attendance`),
-  bulkImportAttendance: (data: any) => 
-    api.post('/volunteer-attendance/bulk-import', data),
-  // Volunteer work assignments
-  getWorkHistory: (volunteerId: string) =>
-    api.get(`/volunteers/${volunteerId}/work-history`),
-  createWorkAssignment: (data: any) => 
-    api.post('/volunteer-work', data),
-  deleteWorkAssignment: (workId: string) => 
-    api.delete(`/volunteer-work/${workId}`),
-  deleteAllWorkForEvent: (eventId: string, volunteerId: string) =>
-    api.delete(`/volunteers/${volunteerId}/work-history/${eventId}`),
-};
-
 // Settings API
 export const settingsAPI = {
   get: () => api.get('/settings'),

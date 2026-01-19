@@ -31,18 +31,6 @@ export const validateParticipantData = (data: any): void => {
   }
 };
 
-export const validateVolunteerData = (data: any): void => {
-  if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
-    throw new ValidationError('name', 'Volunteer name is required');
-  }
-  if (!data.email || !validateEmail(data.email)) {
-    throw new ValidationError('email', 'Valid email is required');
-  }
-  if (!data.comment || typeof data.comment !== 'string' || data.comment.trim().length === 0) {
-    throw new ValidationError('comment', 'Volunteer comment is required');
-  }
-};
-
 export const isValidDate = (dateString: string): boolean => {
   const date = new Date(dateString);
   return !isNaN(date.getTime());

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Calendar, BarChart3, MapPin, CheckCircle, XCircle, Check, X, Users, Trash2 } from 'lucide-react';
-import { eventsAPI, attendanceAPI, volunteersAPI } from '../api/client';
-import { AttendanceStatusBadge } from '../components/AttendanceStatusBadge';
+import { Calendar, BarChart3, MapPin, CheckCircle, XCircle, Check, X } from 'lucide-react';
+import { eventsAPI, attendanceAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import { formatDate, formatDateTime } from '../utils/formatters';
 import './EventsHistory.css';
@@ -25,15 +24,6 @@ interface AttendanceRecord {
   participant_name?: string;
 }
 
-interface VolunteerAttendanceRecord {
-  id: string;
-  volunteer_id: string;
-  event_id: string;
-  volunteer_name?: string;
-  status: 'attended' | 'no_show' | 'not_recorded';
-  attendance_date?: string;
-}
-
 interface EventStats {
   total: number;
   attended: number;
@@ -42,16 +32,12 @@ interface EventStats {
 }
 
 type FilterType = 'all' | 'confirmed' | 'no_show';
-type TabType = 'participants' | 'volunteers';
 
 export function EventsHistory() {
   const [filter, setFilter] = useState<FilterType>('all');
-  const [activeTab, setActiveTab] = useState<TabType>('participants');
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [eventStats, setEventStats] = useState<EventStats | null>(null);
-  const [volunteerAttendance, setVolunteerAttendance] = useState<VolunteerAttendanceRecord[]>([]);
   const [loadingStats, setLoadingStats] = useState(false);
-  const [loadingVolunteers, setLoadingVolunteers] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -92,43 +78,6 @@ export function EventsHistory() {
     loadStats();
   }, [selectedEventId]);
 
-  // Load volunteer attendance when event changes - use real API endpoint
-  useEffect(() => {
-    if (!selectedEventId) {
-      setVolunteerAttendance([]);
-      return;
-    }
-
-    const loadVolunteerAttendance = async () => {
-      setLoadingVolunteers(true);
-      try {
-        // Use real API endpoint: GET /events/{event_id}/volunteer-attendance
-        const response = await volunteersAPI.getAttendanceByEvent(selectedEventId);
-        const data = response.data || [];
-        
-        // Transform data to include not_recorded status if needed
-        const transformedData: VolunteerAttendanceRecord[] = data.map((record: any) => ({
-          id: record.id,
-          volunteer_id: record.volunteer_id,
-          event_id: record.event_id,
-          volunteer_name: record.volunteer_name,
-          status: record.status || 'not_recorded',
-          attendance_date: record.attendance_date || events?.find(e => e.id === selectedEventId)?.date,
-        }));
-
-        setVolunteerAttendance(transformedData);
-      } catch (error) {
-        // If endpoint doesn't exist yet, show empty state
-        console.log('Volunteer attendance endpoint not yet available:', error);
-        setVolunteerAttendance([]);
-      } finally {
-        setLoadingVolunteers(false);
-      }
-    };
-
-    loadVolunteerAttendance();
-  }, [selectedEventId, events]);
-
   const selectedEvent = events?.find((e) => e.id === selectedEventId);
 
   const filteredAttendance = eventStats?.attendance.filter((record) => {
@@ -164,41 +113,6 @@ export function EventsHistory() {
       event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.location?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
-
-  // Handle deletion of volunteer attendance
-  const handleDeleteVolunteerAttendance = async (volunteerAttendanceId: string) => {
-    if (!confirm('Delete this volunteer attendance record?')) return;
-
-    try {
-      await volunteersAPI.deleteAttendance(volunteerAttendanceId);
-      setMessage({ type: 'success', text: 'Attendance record deleted' });
-      
-      // Reload volunteer attendance
-      if (selectedEventId) {
-        const response = await volunteersAPI.getAttendanceByEvent(selectedEventId);
-        const data = response.data || [];
-        setVolunteerAttendance(data);
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to delete attendance record' });
-      console.error('Error deleting attendance:', error);
-    }
-  };
-
-  const handleDeleteAllVolunteerAttendance = async () => {
-    if (!selectedEventId) return;
-
-    try {
-      await volunteersAPI.deleteAllAttendanceForEvent(selectedEventId);
-      setMessage({ type: 'success', text: 'All volunteer attendance records deleted for this event' });
-      
-      // Clear volunteer attendance
-      setVolunteerAttendance([]);
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to delete volunteer attendance records' });
-      console.error('Error deleting all attendance:', error);
-    }
-  };
 
   if (loading) {
     return (
@@ -274,7 +188,7 @@ export function EventsHistory() {
             <div className="empty-state">
               <p>Select an event to view details</p>
             </div>
-          ) : loadingStats && activeTab === 'participants' ? (
+          ) : loadingStats ? (
             <div className="loading-container">
               <div className="spinner"></div>
               <p>Loading event details...</p>
@@ -312,44 +226,10 @@ export function EventsHistory() {
                 borderBottom: '1px solid #eee',
                 marginBottom: '20px'
               }}>
-                <button
-                  className={`tab-btn ${activeTab === 'participants' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('participants')}
-                  style={{
-                    padding: '12px 16px',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem',
-                    fontWeight: activeTab === 'participants' ? '600' : '500',
-                    color: activeTab === 'participants' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                    borderBottom: activeTab === 'participants' ? '2px solid var(--primary-color)' : 'none',
-                    marginBottom: '-1px'
-                  }}
-                >
-                  Participant Attendance
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === 'volunteers' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('volunteers')}
-                  style={{
-                    padding: '12px 16px',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem',
-                    fontWeight: activeTab === 'volunteers' ? '600' : '500',
-                    color: activeTab === 'volunteers' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                    borderBottom: activeTab === 'volunteers' ? '2px solid var(--primary-color)' : 'none',
-                    marginBottom: '-1px'
-                  }}
-                >
-                  <Users size={16} style={{ display: 'inline', marginRight: '6px' }} />
-                  Volunteer Attendance
-                </button>
+                <h3 style={{ margin: 0 }}>Attendance Records</h3>
               </div>
 
-              {activeTab === 'participants' && (
+              {selectedEventId && (
               <>
 
               {/* Stats Cards */}
@@ -454,67 +334,6 @@ export function EventsHistory() {
                           ))}
                       </tbody>
                     </table>
-                  </div>
-                )}
-              </div>
-              </>
-              )}
-
-              {activeTab === 'volunteers' && (
-              <>
-              <div className="volunteer-attendance-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h3 style={{ margin: 0 }}>Volunteer Attendance ({volunteerAttendance.length})</h3>
-                  {volunteerAttendance.length > 0 && (
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => {
-                        if (confirm('Delete all volunteer attendance for this event? This cannot be undone.')) {
-                          handleDeleteAllVolunteerAttendance();
-                        }
-                      }}
-                      title="Delete all volunteer attendance records"
-                    >
-                      <Trash2 size={16} style={{ marginRight: '4px' }} />
-                      Delete All
-                    </button>
-                  )}
-                </div>
-                {loadingVolunteers ? (
-                  <div className="loading-container">
-                    <div className="spinner"></div>
-                    <p>Loading volunteer attendance...</p>
-                  </div>
-                ) : volunteerAttendance.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No volunteer attendance data. Volunteers must be imported through the attendance import process.</p>
-                  </div>
-                ) : (
-                  <div className="volunteer-list">
-                    {volunteerAttendance.map((record) => (
-                      <div key={record.id} className="volunteer-attendance-row">
-                        <div className="volunteer-info">
-                          <h4>{record.volunteer_name || 'Unknown Volunteer'}</h4>
-                          <p style={{ fontSize: '0.85rem', color: '#999' }}>
-                            {formatDate(record.attendance_date || selectedEvent?.date || '')}
-                          </p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <AttendanceStatusBadge
-                            status={record.status === 'attended' ? 'attended' : record.status === 'no_show' ? 'no_show' : 'not_recorded'}
-                            size="sm"
-                          />
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => handleDeleteVolunteerAttendance(record.id)}
-                            title="Delete attendance record"
-                            style={{ padding: '4px 8px' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
