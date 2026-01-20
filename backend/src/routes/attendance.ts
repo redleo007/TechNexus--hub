@@ -119,4 +119,20 @@ router.get(
   })
 );
 
+router.get(
+  '/no-shows',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const noShows = await attendanceService.getAllNoShows();
+    res.json(successResponse(noShows));
+  })
+);
+
+router.get(
+  '/no-shows/by-participant',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const noShows = await attendanceService.getNoShowsByParticipant();
+    res.json(successResponse(noShows));
+  })
+);
+
 export default router;

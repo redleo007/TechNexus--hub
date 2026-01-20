@@ -23,6 +23,13 @@
   align-items: flex-start;
   gap: var(--spacing-lg);
   margin-top: 0;
+  flex-wrap: wrap;
+  min-height: 0;
+}
+
+.dashboard-header > div:first-child {
+  flex: 1;
+  min-width: 250px;
 }
 
 @media (max-width: 768px) {
@@ -75,12 +82,15 @@
   overflow: hidden;
   background: var(--card-bg);
   border: 1px solid rgba(0, 217, 255, 0.3);
+  min-height: 120px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .stat-card {
     padding: var(--spacing-md);
     gap: var(--spacing-md);
+    min-height: 100px;
   }
 }
 
@@ -89,6 +99,7 @@
     padding: var(--spacing-md);
     gap: var(--spacing-sm);
     flex-direction: row;
+    min-height: 90px;
   }
 }
 
@@ -113,31 +124,54 @@
   align-items: center;
   justify-content: center;
   min-width: 50px;
+  width: 50px;
+  height: 50px;
   text-align: center;
   font-size: 2rem;
   color: var(--neon-cyan);
+  flex-shrink: 0;
+}
+
+.stat-icon svg {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .stat-content h3 {
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
+  margin: 0;
   opacity: 0.9;
   color: var(--text-primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  margin: 0;
   color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .stat-label {
   font-size: 0.875rem;
   margin: 0;
   color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 /* Latest Event Section */
@@ -215,6 +249,8 @@
   transition: all 0.3s ease;
   background: var(--card-bg);
   border: 1px solid rgba(0, 217, 255, 0.3);
+  min-height: 80px;
+  box-sizing: border-box;
 }
 
 .event-stat-card:hover {

@@ -1,153 +1,284 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Download } from 'lucide-react';
-import { attendanceAPI, participantsAPI, eventsAPI } from '../api/client';
+import { XCircle, Download } from 'lucide-react';
+import { attendanceAPI } from '../api/client';
+import { formatDateTime } from '../utils/formatters';
 import './NoShows.css';
 
 interface NoShowRecord {
   id: string;
   event_id: string;
   participant_id: string;
-  participant_name: string;
-  event_name: string;
-  date: string;
+  status: string;
   marked_at: string;
+  events: {
+    id: string;
+    name: string;
+    date: string;
+  };
+  participants: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-}
-
-interface Event {
-  id: string;
-  name: string;
-  date?: string;
+interface NoShowByParticipant {
+  participant_id: string;
+  no_show_count: number;
+  participant: {
+    id: string;
+    name: string;
+    email: string;
+    is_blocklisted: boolean;
+  };
 }
 
 export function NoShows() {
   const [noShowRecords, setNoShowRecords] = useState<NoShowRecord[]>([]);
+  const [noShowsByParticipant, setNoShowsByParticipant] = useState<NoShowByParticipant[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<NoShowRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedParticipantId, setSelectedParticipantId] = useState('');
-  const [selectedEventId, setSelectedEventId] = useState('');
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [viewMode, setViewMode] = useState<'all' | 'by-participant'>('all');
 
   useEffect(() => {
     document.title = 'No Shows - TechNexus Community';
-  }, []);
-
-  // Load participants and events
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [pRes, eRes] = await Promise.all([
-          participantsAPI.getAll(false),
-          eventsAPI.getAll(),
-        ]);
-        setParticipants(pRes.data || []);
-        setEvents(eRes.data || []);
-      } catch (error) {
-        console.error('Failed to load data:', error);
-      }
-    };
     loadData();
   }, []);
 
-  // Load no-show records
-  useEffect(() => {
-    const loadNoShows = async () => {
-      setLoading(true);
-      try {
-        const records: NoShowRecord[] = [];
-        for (const event of events) {
-          const attendance = await attendanceAPI.getByEvent(event.id);
-          for (const record of attendance.data || []) {
-            if (record.status === 'no_show') {
-              const participant = participants.find(p => p.id === record.participant_id);
-              if (participant) {
-                records.push({
-                  id: record.id,
-                  event_id: event.id,
-                  participant_id: record.participant_id,
-                  participant_name: participant.name,
-                  event_name: event.name,
-                  date: event.date || '',
-                  marked_at: record.marked_at,
-                });
-              }
-            }
-          }
-        }
-        setNoShowRecords(records);
-        updateFilter(records, searchTerm);
-      } catch (error) {
-        console.error('Failed to load no-shows:', error);
-        setMessage({ type: 'error', text: 'Failed to load no-show records' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (events.length > 0 && participants.length > 0) {
-      loadNoShows();
-    }
-  }, [events, participants]);
-
-  // Update filtered records when search changes
-  useEffect(() => {
-    updateFilter(noShowRecords, searchTerm);
-  }, [searchTerm, noShowRecords]);
-
-  const updateFilter = (records: NoShowRecord[], term: string) => {
-    if (!term.trim()) {
-      setFilteredRecords(records);
-    } else {
-      const lower = term.toLowerCase();
-      setFilteredRecords(
-        records.filter(r => r.participant_name.toLowerCase().includes(lower))
-      );
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [allNoShows, byParticipant] = await Promise.all([
+        attendanceAPI.getNoShows(),
+        attendanceAPI.getNoShowsByParticipant(),
+      ]);
+      
+      setNoShowRecords(allNoShows.data || allNoShows || []);
+      setNoShowsByParticipant(byParticipant.data || byParticipant || []);
+      setFilteredRecords(allNoShows.data || allNoShows || []);
+    } catch (error) {
+      console.error('Failed to load no-shows:', error);
+      setMessage({ type: 'error', text: 'Failed to load no-show records' });
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Update filtered records when search changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredRecords(noShowRecords);
+    } else {
+      const lower = searchTerm.toLowerCase();
+      setFilteredRecords(
+        noShowRecords.filter(r => 
+          r.participants?.name?.toLowerCase().includes(lower) ||
+          r.participants?.email?.toLowerCase().includes(lower)
+        )
+      );
+    }
+  }, [searchTerm, noShowRecords]);
+
   const handleExportCSV = () => {
-    if (filteredRecords.length === 0) {
+    const dataToExport = viewMode === 'all' ? filteredRecords : noShowsByParticipant;
+    
+    if (dataToExport.length === 0) {
       setMessage({ type: 'error', text: 'No records to export' });
       return;
     }
 
-    const headers = ['Name', 'Email', 'Event', 'Event Date', 'Marked At'];
-    const rows = filteredRecords.map(r => [
-      r.participant_name,
-      participants.find(p => p.id === r.participant_id)?.email || '',
-      r.event_name,
-      r.date,
-      new Date(r.marked_at).toLocaleString(),
-    ]);
+    let csv: string;
+    if (viewMode === 'all') {
+      const headers = ['Name', 'Email', 'Event', 'Event Date', 'Marked At'];
+      const rows = (dataToExport as NoShowRecord[]).map(r => [
+        r.participants?.name || 'Unknown',
+        r.participants?.email || 'N/A',
+        r.events?.name || 'Unknown Event',
+        r.events?.date || 'N/A',
+        formatDateTime(r.marked_at),
+      ]);
+      csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    } else {
+      const headers = ['Name', 'Email', 'No-Show Count', 'Blocklisted'];
+      const rows = (dataToExport as NoShowByParticipant[]).map(r => [
+        r.participant?.name || 'Unknown',
+        r.participant?.email || 'N/A',
+        r.no_show_count.toString(),
+        r.participant?.is_blocklisted ? 'Yes' : 'No',
+      ]);
+      csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    }
 
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `no-shows-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `no-shows-${viewMode}-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    
+    setMessage({ type: 'success', text: `Exported ${dataToExport.length} records` });
   };
 
-  const handleAddRecord = async () => {
-    if (!selectedParticipantId || !selectedEventId) {
-      setMessage({ type: 'error', text: 'Please select participant and event' });
-      return;
-    }
+  if (loading) {
+    return (
+      <div className="no-shows loading-container">
+        <div className="spinner"></div>
+        <p>Loading no-show records...</p>
+      </div>
+    );
+  }
 
-    try {
-      await attendanceAPI.mark({ participant_id: selectedParticipantId, event_id: selectedEventId, status: 'no_show' });
-      setMessage({ type: 'success', text: 'No-show record added' });
+  const totalNoShows = noShowRecords.length;
+  const uniqueParticipants = noShowsByParticipant.length;
+
+  return (
+    <div className="no-shows">
+      <div className="page-header">
+        <h1>No-Show Records</h1>
+        <p>Track participants who missed events</p>
+      </div>
+
+      {message && (
+        <div className={`alert alert-${message.type}`}>
+          {message.text}
+        </div>
+      )}
+
+      <div className="stats-section">
+        <div className="stat-card stat-card-danger">
+          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-content">
+            <h3>Total No-Shows</h3>
+            <p className="stat-value">{totalNoShows}</p>
+          </div>
+        </div>
+        <div className="stat-card stat-card-warning">
+          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-content">
+            <h3>Unique Participants</h3>
+            <p className="stat-value">{uniqueParticipants}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="list-header">
+          <div className="view-tabs">
+            <button 
+              className={`tab ${viewMode === 'all' ? 'active' : ''}`}
+              onClick={() => setViewMode('all')}
+            >
+              All No-Shows ({totalNoShows})
+            </button>
+            <button 
+              className={`tab ${viewMode === 'by-participant' ? 'active' : ''}`}
+              onClick={() => setViewMode('by-participant')}
+            >
+              By Participant ({uniqueParticipants})
+            </button>
+          </div>
+          
+          {viewMode === 'all' && (
+            <div className="search-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          )}
+          
+          <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
+            <Download size={16} /> Export CSV
+          </button>
+        </div>
+
+        {viewMode === 'all' ? (
+          filteredRecords.length > 0 ? (
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Participant</th>
+                    <th>Email</th>
+                    <th>Event</th>
+                    <th>Event Date</th>
+                    <th>Marked At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRecords.map((record) => (
+                    <tr key={record.id}>
+                      <td>{record.participants?.name || 'Unknown'}</td>
+                      <td>{record.participants?.email || 'N/A'}</td>
+                      <td>{record.events?.name || 'Unknown Event'}</td>
+                      <td>{record.events?.date || 'N/A'}</td>
+                      <td>{formatDateTime(record.marked_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>{searchTerm ? 'No matches found' : 'No no-show records'}</p>
+            </div>
+          )
+        ) : (
+          noShowsByParticipant.length > 0 ? (
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Participant</th>
+                    <th>Email</th>
+                    <th>No-Show Count</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {noShowsByParticipant
+                    .sort((a, b) => b.no_show_count - a.no_show_count)
+                    .map((record) => (
+                      <tr key={record.participant_id}>
+                        <td>{record.participant?.name || 'Unknown'}</td>
+                        <td>{record.participant?.email || 'N/A'}</td>
+                        <td>
+                          <span className={`badge ${record.no_show_count >= 2 ? 'badge-danger' : 'badge-warning'}`}>
+                            {record.no_show_count}
+                          </span>
+                        </td>
+                        <td>
+                          {record.participant?.is_blocklisted ? (
+                            <span className="badge badge-danger">Blocklisted</span>
+                          ) : record.no_show_count >= 2 ? (
+                            <span className="badge badge-warning">Should be blocklisted</span>
+                          ) : (
+                            <span className="badge badge-secondary">Active</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No no-show records</p>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default NoShows;
       setShowAddForm(false);
       setSelectedParticipantId('');
       setSelectedEventId('');

@@ -76,7 +76,13 @@ export function Blocklist() {
       setMessage({ type: 'success', text: 'Participant added to blocklist' });
       setFormData({ participant_id: '', reason: '' });
       setShowAddForm(false);
-      refetchBlocklist();
+      
+      // Refresh data immediately
+      const res = await blocklistAPI.getAll();
+      const data = (res.data || []) as BlocklistEntry[];
+      setBlocklistData(data);
+      setFilteredData(data);
+      
       refetchParticipants();
     } catch (error) {
       setMessage({
@@ -92,7 +98,13 @@ export function Blocklist() {
     try {
       await blocklistAPI.remove(participantId);
       setMessage({ type: 'success', text: 'Participant removed from blocklist' });
-      refetchBlocklist();
+      
+      // Refresh data immediately
+      const res = await blocklistAPI.getAll();
+      const data = (res.data || []) as BlocklistEntry[];
+      setBlocklistData(data);
+      setFilteredData(data);
+      
       refetchParticipants();
     } catch (error) {
       setMessage({
@@ -103,15 +115,22 @@ export function Blocklist() {
   };
 
   const handleExport = () => {
-    if (filteredData.length === 0) {
+    if (blocklistData.length === 0) {
+      setMessage({ type: 'error', text: 'No records to export' });
+      return;
+    }
+
+    const dataToExport = searchTerm ? filteredData : blocklistData;
+    
+    if (dataToExport.length === 0) {
       setMessage({ type: 'error', text: 'No records to export' });
       return;
     }
 
     const headers = ['Name', 'Email', 'Reason', 'Date Added'];
-    const rows = filteredData.map((entry) => [
-      entry.participants?.name || '',
-      entry.participants?.email || '',
+    const rows = dataToExport.map((entry) => [
+      entry.participants?.name || 'Unknown',
+      entry.participants?.email || 'N/A',
       entry.reason,
       new Date(entry.created_at).toLocaleDateString(),
     ]);
@@ -128,6 +147,8 @@ export function Blocklist() {
     a.download = `blocklist-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
+    
+    setMessage({ type: 'success', text: `Exported ${dataToExport.length} records` });
   };
 
   if (loading) {

@@ -53,6 +53,8 @@ export const attendanceAPI = {
   getByParticipant: (participantId: string) => api.get(`/attendance/participant/${participantId}`),
   update: (id: string, status: string) => api.put(`/attendance/${id}`, { status }),
   getStats: () => api.get('/attendance/stats/overview'),
+  getNoShows: () => api.get('/attendance/no-shows'),
+  getNoShowsByParticipant: () => api.get('/attendance/no-shows/by-participant'),
 };
 
 // Blocklist API

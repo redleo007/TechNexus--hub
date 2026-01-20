@@ -207,6 +207,7 @@ label {
   padding: 10px 16px;
   font-size: 0.95rem;
   font-weight: 600;
+  line-height: 1.5;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -214,6 +215,13 @@ label {
   white-space: nowrap;
   min-height: 40px;
   text-decoration: none;
+  vertical-align: middle;
+}
+
+.btn svg,
+.btn i {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .btn:hover:not(:disabled) {
@@ -228,6 +236,33 @@ label {
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  min-height: 32px;
+  gap: 6px;
+}
+
+.btn-sm svg,
+.btn-sm i {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-lg {
+  padding: 14px 24px;
+  font-size: 1rem;
+  min-height: 48px;
+  gap: 10px;
+}
+
+.btn-lg svg,
+.btn-lg i {
+  width: 20px;
+  height: 20px;
 }
 
 /* Button Variants */
@@ -494,12 +529,17 @@ main,
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: var(--spacing-lg) 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  box-sizing: border-box;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   min-width: 600px;
+  margin: 0;
 }
 
 .table thead {
@@ -513,6 +553,9 @@ main,
   font-weight: 600;
   color: var(--neon-cyan);
   font-size: 0.95rem;
+  line-height: 1.5;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .table td {
@@ -520,6 +563,8 @@ main,
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 0.95rem;
+  line-height: 1.5;
+  vertical-align: middle;
 }
 
 .table tbody tr:hover {
@@ -535,6 +580,11 @@ main,
   .table th,
   .table td {
     padding: 10px 8px;
+    min-height: 44px;
+  }
+  
+  .table-container {
+    margin: var(--spacing-md) 0;
   }
 }
 
@@ -547,6 +597,11 @@ main,
   .table th,
   .table td {
     padding: 8px 6px;
+    font-size: 0.85rem;
+  }
+  
+  .table-container {
+    margin: var(--spacing-sm) 0;
   }
 }
 

@@ -92,6 +92,70 @@ export const getAttendanceStats = async (): Promise<{ attended: number; noShow: 
   };
 };
 
+export const getAllNoShows = async (): Promise<any[]> => {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('attendance')
+    .select(`
+      id,
+      event_id,
+      participant_id,
+      status,
+      marked_at,
+      events (
+        id,
+        name,
+        date
+      ),
+      participants (
+        id,
+        name,
+        email
+      )
+    `)
+    .eq('status', 'no_show')
+    .order('marked_at', { ascending: false });
+
+  if (error) throw new Error(`Failed to fetch no-shows: ${error.message}`);
+  return (data || []) as any[];
+};
+
+export const getNoShowsByParticipant = async (): Promise<any[]> => {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('attendance')
+    .select(`
+      participant_id,
+      participants (
+        id,
+        name,
+        email,
+        is_blocklisted
+      )
+    `)
+    .eq('status', 'no_show');
+
+  if (error) throw new Error(`Failed to fetch no-shows by participant: ${error.message}`);
+  
+  // Group by participant and count
+  const grouped = (data || []).reduce((acc: any, curr: any) => {
+    const pid = curr.participant_id;
+    if (!acc[pid]) {
+      acc[pid] = {
+        participant_id: pid,
+        participant: curr.participants,
+        no_show_count: 0,
+      };
+    }
+    acc[pid].no_show_count++;
+    return acc;
+  }, {});
+  
+  return Object.values(grouped);
+};
+
 export const bulkImportAttendance = async (attendanceRecords: Array<{
   name: string;
   email: string;
@@ -179,13 +243,9 @@ export const bulkImportAttendance = async (attendanceRecords: Array<{
       if (attendanceStatus === 'no_show') {
         const noShowCount = await getNoShowCount(participantId);
         if (noShowCount >= 2) {
-          await supabase
-            .from('participants')
-            .update({
-              is_blocklisted: true,
-              blocklist_reason: `Auto-blocklisted: ${noShowCount} no-shows`,
-            })
-            .eq('id', participantId);
+          // Import the addToBlocklist function
+          const { addToBlocklist } = await import('./blocklistService');
+          await addToBlocklist(participantId, `Auto-blocklisted: ${noShowCount} no-shows`);
         }
       }
     } catch (error) {
@@ -330,13 +390,8 @@ export const bulkImportAttendanceWithSnapshots = async (
       if (attendanceStatus === 'no_show') {
         const noShowCount = await getNoShowCount(participantId);
         if (noShowCount >= 2) {
-          await supabase
-            .from('participants')
-            .update({
-              is_blocklisted: true,
-              blocklist_reason: `Auto-blocklisted: ${noShowCount} no-shows`,
-            })
-            .eq('id', participantId);
+          const { addToBlocklist } = await import('./blocklistService');
+          await addToBlocklist(participantId, `Auto-blocklisted: ${noShowCount} no-shows`);
         }
       }
 

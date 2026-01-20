@@ -83,6 +83,31 @@ export const checkAndAutoBlock = async (participantId: string): Promise<boolean>
 export const addToBlocklist = async (participantId: string, reason: string): Promise<BlocklistEntry> => {
   const supabase = getSupabaseClient();
   
+  // Update participant status
+  await updateParticipant(participantId, {
+    is_blocklisted: true,
+    blocklist_reason: reason,
+  } as any);
+  
+  // Check if already in blocklist
+  const { data: existing } = await supabase
+    .from('blocklist')
+    .select('id')
+    .eq('participant_id', participantId)
+    .single();
+  
+  if (existing) {
+    // Update existing entry
+    const { data, error } = await supabase
+      .from('blocklist')
+      .update({ reason })
+      .eq('participant_id', participantId)
+      .select()\n      .single();
+    
+    if (error) throw new Error(`Failed to update blocklist: ${error.message}`);
+    return data as BlocklistEntry;
+  }
+  
   const { data, error } = await supabase
     .from('blocklist')
     .insert([{ participant_id: participantId, reason }])
@@ -90,6 +115,14 @@ export const addToBlocklist = async (participantId: string, reason: string): Pro
     .single();
 
   if (error) throw new Error(`Failed to add to blocklist: ${error.message}`);
+  
+  // Log activity
+  await logActivity({
+    type: 'participant_blocked',
+    participant_id: participantId,
+    details: reason,
+  });
+  
   return data as BlocklistEntry;
 };
 
@@ -120,7 +153,16 @@ export const getBlocklist = async (): Promise<any[]> => {
   
   const { data, error } = await supabase
     .from('blocklist')
-    .select('blocklist:*, participants(*)')
+    .select(`
+      id,
+      participant_id,
+      reason,
+      created_at,
+      participants (
+        name,
+        email
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Failed to fetch blocklist: ${error.message}`);

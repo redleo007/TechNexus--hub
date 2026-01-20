@@ -47,6 +47,38 @@
   flex-wrap: wrap;
 }
 
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  border-radius: 8px;
+  padding: 4px;
+  background: rgba(0, 217, 255, 0.05);
+}
+
+.view-tabs .tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.view-tabs .tab:hover {
+  background: rgba(0, 217, 255, 0.1);
+  color: var(--neon-cyan);
+}
+
+.view-tabs .tab.active {
+  background: var(--neon-cyan);
+  color: var(--dark-bg);
+  font-weight: 500;
+}
+
 .search-container {
   flex: 1;
   min-width: 250px;
