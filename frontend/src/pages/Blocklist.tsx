@@ -177,7 +177,7 @@ export function Blocklist() {
       )}
 
       <div className="blocklist-stat">
-        <div className="stat-card stat-card-danger">
+        <div className="stat-card">
           <div className="stat-icon"><Ban size={40} /></div>
           <div className="stat-content">
             <h3>Total Blocklisted</h3>

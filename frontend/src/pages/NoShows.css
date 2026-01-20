@@ -23,6 +23,52 @@
   margin-bottom: var(--spacing-xl);
 }
 
+.stat-card {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: all 0.3s ease;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  color: var(--neon-cyan);
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-content h3 {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .stats-section {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -45,38 +91,6 @@
   gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-}
-
-.view-tabs {
-  display: flex;
-  gap: 8px;
-  border: 1px solid rgba(0, 217, 255, 0.3);
-  border-radius: 8px;
-  padding: 4px;
-  background: rgba(0, 217, 255, 0.05);
-}
-
-.view-tabs .tab {
-  padding: 8px 16px;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.view-tabs .tab:hover {
-  background: rgba(0, 217, 255, 0.1);
-  color: var(--neon-cyan);
-}
-
-.view-tabs .tab.active {
-  background: var(--neon-cyan);
-  color: var(--dark-bg);
-  font-weight: 500;
 }
 
 .search-container {
@@ -113,11 +127,11 @@
 }
 
 .add-form-section {
-  background: rgba(255, 0, 110, 0.03);
+  background: rgba(0, 217, 255, 0.03);
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
-  border: 1px solid rgba(255, 0, 110, 0.2);
+  border: 1px solid rgba(0, 217, 255, 0.2);
 }
 
 .add-form-section h3 {

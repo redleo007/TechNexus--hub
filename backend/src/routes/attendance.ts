@@ -70,8 +70,8 @@ router.post(
       status,
     });
 
-    // Check if auto-blocking should occur
-    if (status === 'no_show') {
+    // Check if auto-blocking should occur (for no_show, not_attended, or null)
+    if (status === 'no_show' || status === 'not_attended' || !status) {
       await checkAndAutoBlock(participant_id);
     }
 
@@ -101,8 +101,8 @@ router.put(
     const { status } = req.body;
     const attendance = await attendanceService.updateAttendance(req.params.id, status);
 
-    // Check if auto-blocking should occur
-    if (status === 'no_show') {
+    // Check if auto-blocking should occur (for no_show, not_attended, or null)
+    if (status === 'no_show' || status === 'not_attended' || !status) {
       // Need to get participant_id from the attendance record
       await checkAndAutoBlock(attendance.participant_id);
     }
@@ -132,6 +132,15 @@ router.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const noShows = await attendanceService.getNoShowsByParticipant();
     res.json(successResponse(noShows));
+  })
+);
+
+router.delete(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    // Delete handles blocklist removal internally if needed
+    await attendanceService.deleteAttendance(req.params.id);
+    res.json(successResponse({ message: 'Attendance record deleted successfully' }));
   })
 );
 

@@ -215,6 +215,14 @@
   margin: 0; 
   font-size: 0.875rem;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-location svg {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 /* Event Details Panel */
@@ -263,6 +271,11 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+.event-meta svg {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .event-description { 
@@ -321,38 +334,13 @@
   box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
 }
 
-.stat-card-confirmed {
-  border-color: rgba(0, 255, 65, 0.3);
-}
-
-.stat-card-confirmed:hover {
-  border-color: var(--neon-lime);
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
-}
-
-.stat-card-confirmed .stat-icon {
-  color: var(--neon-lime);
-}
-
-.stat-card-no-show {
-  border-color: rgba(255, 0, 110, 0.3);
-}
-
-.stat-card-no-show:hover {
-  border-color: var(--neon-magenta);
-  box-shadow: 0 0 20px rgba(255, 0, 110, 0.2);
-}
-
-.stat-card-no-show .stat-icon {
-  color: var(--neon-magenta);
-}
-
 .stat-icon {
   font-size: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 40px;
+  color: var(--neon-cyan);
 }
 
 .stat-content {

@@ -212,7 +212,9 @@ export function Events() {
                 </div>
 
                 {event.location && (
-                  <p className="event-location"><MapPin size={16} style={{ display: 'inline', marginRight: '4px' }} /> {event.location}</p>
+                  <p className="event-location">
+                    <MapPin size={16} /> {event.location}
+                  </p>
                 )}
 
                 {event.description && (

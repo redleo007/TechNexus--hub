@@ -178,7 +178,9 @@ export function EventsHistory() {
                     </span>
                   </div>
                   {event.location && (
-                    <p className="event-location"><MapPin size={16} style={{ display: 'inline', marginRight: '4px' }} /> {event.location}</p>
+                    <p className="event-location">
+                      <MapPin size={16} /> {event.location}
+                    </p>
                   )}
                 </div>
               ))
@@ -204,8 +206,13 @@ export function EventsHistory() {
                 <div>
                   <h2>{selectedEvent.name}</h2>
                   <p className="event-meta">
-                    <Calendar size={16} style={{ display: 'inline', marginRight: '4px' }} /> {formatDate(selectedEvent.date)}
-                    {selectedEvent.location && ` • `}<MapPin size={14} style={{ display: 'inline', marginLeft: '4px', marginRight: '4px' }} />{selectedEvent.location && selectedEvent.location}
+                    <Calendar size={16} /> {formatDate(selectedEvent.date)}
+                    {selectedEvent.location && (
+                      <>
+                        {' • '}
+                        <MapPin size={16} /> {selectedEvent.location}
+                      </>
+                    )}
                   </p>
                   {selectedEvent.description && (
                     <p className="event-description">{selectedEvent.description}</p>
@@ -238,21 +245,21 @@ export function EventsHistory() {
 
               {/* Stats Cards */}
               <div className="stats-section">
-                <div className="stat-card stat-card-total">
+                <div className="stat-card">
                   <div className="stat-icon"><BarChart3 size={40} /></div>
                   <div className="stat-content">
                     <span className="stat-label">Total Attendance</span>
                     <span className="stat-value">{stats.total}</span>
                   </div>
                 </div>
-                <div className="stat-card stat-card-confirmed">
+                <div className="stat-card">
                   <div className="stat-icon"><CheckCircle size={40} /></div>
                   <div className="stat-content">
                     <span className="stat-label">Confirmed</span>
                     <span className="stat-value">{stats.attended}</span>
                   </div>
                 </div>
-                <div className="stat-card stat-card-no-show">
+                <div className="stat-card">
                   <div className="stat-icon"><XCircle size={40} /></div>
                   <div className="stat-content">
                     <span className="stat-label">No-Shows</span>

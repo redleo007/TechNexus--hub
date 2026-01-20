@@ -102,7 +102,8 @@ export const addToBlocklist = async (participantId: string, reason: string): Pro
       .from('blocklist')
       .update({ reason })
       .eq('participant_id', participantId)
-      .select()\n      .single();
+      .select()
+      .single();
     
     if (error) throw new Error(`Failed to update blocklist: ${error.message}`);
     return data as BlocklistEntry;
