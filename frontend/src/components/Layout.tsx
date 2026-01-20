@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Calendar,
   History,
+  Upload,
   Ban,
   AlertCircle,
   Settings,
@@ -20,7 +21,8 @@ interface NavLink {
 const mainNavLinks: NavLink[] = [
   { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   { path: '/events', label: 'Events', icon: <Calendar size={20} /> },
-  { path: '/events-history', label: 'Events history', icon: <History size={20} /> },
+  { path: '/events-history', label: 'Events History', icon: <History size={20} /> },
+  { path: '/import-attendance', label: 'Import & Attendance', icon: <Upload size={20} /> },
   { path: '/blocklist', label: 'Blocklist', icon: <Ban size={20} /> },
   { path: '/no-shows', label: 'No Shows', icon: <AlertCircle size={20} /> },
   { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },

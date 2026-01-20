@@ -26,6 +26,8 @@ export const eventsAPI = {
   deleteAllAttendance: (eventId: string) => api.delete(`/events/${eventId}/participants/attendance`),
   deleteSelectedAttendance: (eventId: string, attendanceIds: string[]) =>
     api.post(`/events/${eventId}/participants/attendance/bulk-delete`, { attendance_ids: attendanceIds }),
+  undoDelete: (eventId: string, type: 'participant' | 'attendance', undoToken: string) =>
+    api.post(`/events/${eventId}/participants/undo-delete`, { type, undo_token: undoToken }),
 };
 
 // Participants API

@@ -5,9 +5,11 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Events } from './pages/Events';
 import { EventsHistory } from './pages/EventsHistory';
+import { ImportAttendance } from './pages/ImportAttendance';
 import { NoShows } from './pages/NoShows';
 import { Blocklist } from './pages/Blocklist';
 import { Settings } from './pages/Settings';
+import './styles/globals.css';
 import './styles/index.css';
 
 function App() {
@@ -65,6 +67,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events-history" element={<EventsHistory />} />
+          <Route path="/import-attendance" element={<ImportAttendance />} />
           <Route path="/no-shows" element={<NoShows />} />
           <Route path="/blocklist" element={<Blocklist />} />
           <Route path="/settings" element={<Settings />} />

@@ -61,14 +61,15 @@ router.post(
       }
     }
 
-    // Bulk create participants with event tracking
-    const result = await participantService.bulkCreateParticipantsWithEvent(
+    // Bulk create participants with dedup per event (prevents duplicates)
+    const result = await participantService.bulkCreateParticipantsWithEventDedup(
       participants
     );
 
     res.status(201).json(successResponse({ 
-      imported: result.length,
-      data: result 
+      imported: result.created.length,
+      duplicates: result.duplicates,
+      data: result.created 
     }));
   })
 );

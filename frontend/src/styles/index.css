@@ -1,72 +1,7 @@
-/* Neon Colors */
-:root {
-  --neon-cyan: #00d9ff;
-  --neon-purple: #b100ff;
-  --neon-magenta: #ff006e;
-  --neon-lime: #00ff41;
-  --neon-pink: #ff10f0;
-  --dark-bg: #050811;
-  --card-bg: #0f0f1e;
-  --input-bg: #0a0a12;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a0a0a0;
-  --border-color: #00d9ff33;
-  --base-font-size: 16px;
-}
+/* Global utilities and components (theme variables and base colors live in globals.css) */
 
-/* Global Typography - Single Font Family */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-}
-
-html {
-  font-size: var(--base-font-size);
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: var(--text-primary);
-  background: var(--dark-bg);
-  line-height: 1.6;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--neon-cyan);
-}
-
-h1 { font-size: 2rem; margin-bottom: 1rem; text-shadow: 0 0 10px rgba(0, 217, 255, 0.3); color: var(--neon-cyan); }
-h2 { font-size: 1.75rem; margin-bottom: 0.875rem; color: var(--neon-cyan); }
-h3 { font-size: 1.5rem; margin-bottom: 0.75rem; color: var(--neon-cyan); }
-h4 { font-size: 1.25rem; margin-bottom: 0.625rem; color: var(--text-primary); }
-h5 { font-size: 1.125rem; margin-bottom: 0.5rem; color: var(--text-primary); }
-h6 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-primary); }
-
-p {
-  font-size: 0.95rem;
-  margin-bottom: 0.875rem;
-  color: var(--text-primary);
-}
-
-a {
-  color: var(--neon-cyan);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-a:hover {
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
-}
+a { color: var(--neon-cyan); text-decoration: none; transition: all 0.3s ease; }
+a:hover { text-shadow: 0 0 10px rgba(0, 217, 255, 0.5); }
 
 /* Utilities */
 .container {
@@ -133,20 +68,8 @@ a:hover {
 }
 
 /* Cards */
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.1);
-}
-
-.card:hover {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 30px rgba(0, 217, 255, 0.2);
-  transform: translateY(-4px);
-}
+.card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(0, 217, 255, 0.1); }
+.card:hover { border-color: var(--neon-cyan); box-shadow: 0 0 30px rgba(0, 217, 255, 0.2); transform: translateY(-4px); }
 
 .card-elevated {
   box-shadow: 0 0 40px rgba(177, 0, 255, 0.15);

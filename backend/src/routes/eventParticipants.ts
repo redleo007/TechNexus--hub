@@ -124,3 +124,25 @@ router.post(
 );
 
 export default router;
+
+/**
+ * POST /api/events/:event_id/participants/undo-delete
+ * Undo the last delete operation for this event (one-time, token-based)
+ */
+router.post(
+  '/undo-delete',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { event_id } = req.params;
+    const { type, undo_token } = req.body as { type: 'participant' | 'attendance'; undo_token: string };
+
+    if (!event_id) {
+      return res.status(400).json({ error: 'event_id is required' });
+    }
+    if (!type || !undo_token) {
+      return res.status(400).json({ error: 'type and undo_token are required' });
+    }
+
+    const result = await eventParticipantService.undoLastDelete(event_id, type, undo_token);
+    res.json(successResponse(result));
+  })
+);

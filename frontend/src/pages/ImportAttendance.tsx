@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Loader, CheckCircle, AlertTriangle, Check } from 'lucide-react';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { participantsAPI, attendanceAPI, eventsAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import './ImportAttendance.css';
@@ -22,19 +23,7 @@ interface Event {
   date: string;
 }
 
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  is_blocklisted: boolean;
-}
 
-interface AttendanceRecord {
-  id: string;
-  participant_id: string;
-  status: string;
-  created_at: string;
-}
 
 export function ImportAttendance() {
   const [activeTab, setActiveTab] = useState<'participants' | 'attendance' | 'delete'>('participants');
@@ -57,21 +46,15 @@ export function ImportAttendance() {
 
   // Delete state
   const [selectedEventDelete, setSelectedEventDelete] = useState<string>('');
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
-  const [selectedAttendance, setSelectedAttendance] = useState<Set<string>>(new Set());
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     type: 'participant' | 'attendance' | null;
-    deleteAll: boolean;
-    count: number;
   }>({
     isOpen: false,
     type: null,
-    deleteAll: false,
-    count: 0,
   });
+  const [deleteMessage, setDeleteMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [lastDeleteUndo, setLastDeleteUndo] = useState<{ type: 'participant' | 'attendance'; token: string } | null>(null);
 
   const { data: events } = useAsync<Event[]>(
     () => eventsAPI.getAll().then((res) => res.data),
@@ -155,42 +138,90 @@ export function ImportAttendance() {
     }
   };
 
-  // Participant file handler
+  // Participant file handler - supports CSV and Excel
   const handleParticipantFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const mappedData = (results.data as any[]).map(mapParticipantColumns);
-        setParticipantFileData(mappedData);
-        setParticipantMessage(null);
-      },
-      error: (error) => {
-        setParticipantMessage({ type: 'error', text: `CSV parsing error: ${error.message || 'Unknown error'}` });
-      },
-    });
+    const fileName = file.name.toLowerCase();
+    
+    // Validate file type
+    if (fileName.endsWith('.csv')) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const mappedData = (results.data as any[]).map(mapParticipantColumns);
+          setParticipantFileData(mappedData);
+          setParticipantMessage(null);
+        },
+        error: (error) => {
+          setParticipantMessage({ type: 'error', text: `CSV parsing error: ${error.message || 'Unknown error'}` });
+        },
+      });
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const bstr = event.target?.result;
+          const wb = XLSX.read(bstr, { type: 'binary' });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws);
+          const mappedData = (data as any[]).map(mapParticipantColumns);
+          setParticipantFileData(mappedData);
+          setParticipantMessage(null);
+        } catch (error) {
+          setParticipantMessage({ type: 'error', text: 'Failed to parse Excel file' });
+        }
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      setParticipantMessage({ type: 'error', text: 'Please upload a CSV or Excel file (.csv, .xlsx, .xls)' });
+    }
   };
 
-  // Attendance file handler
+  // Attendance file handler - supports CSV and Excel
   const handleAttendanceFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const mappedData = (results.data as any[]).map(mapAttendanceColumns);
-        setAttendanceFileData(mappedData);
-        setAttendanceMessage(null);
-      },
-      error: (error) => {
-        setAttendanceMessage({ type: 'error', text: `CSV parsing error: ${error.message || 'Unknown error'}` });
-      },
-    });
+    const fileName = file.name.toLowerCase();
+    
+    // Validate file type
+    if (fileName.endsWith('.csv')) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const mappedData = (results.data as any[]).map(mapAttendanceColumns);
+          setAttendanceFileData(mappedData);
+          setAttendanceMessage(null);
+        },
+        error: (error) => {
+          setAttendanceMessage({ type: 'error', text: `CSV parsing error: ${error.message || 'Unknown error'}` });
+        },
+      });
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const bstr = event.target?.result;
+          const wb = XLSX.read(bstr, { type: 'binary' });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws);
+          const mappedData = (data as any[]).map(mapAttendanceColumns);
+          setAttendanceFileData(mappedData);
+          setAttendanceMessage(null);
+        } catch (error) {
+          setAttendanceMessage({ type: 'error', text: 'Failed to parse Excel file' });
+        }
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      setAttendanceMessage({ type: 'error', text: 'Please upload a CSV or Excel file (.csv, .xlsx, .xls)' });
+    }
   };
 
   // Participant validation
@@ -205,175 +236,92 @@ export function ImportAttendance() {
     return hasValidName && hasValidEmail;
   };
 
-  // Load participants for an event
-  const loadEventParticipants = async (eventId: string) => {
-    if (!eventId) {
-      setParticipants([]);
-      return;
-    }
-
-    try {
-      const response = await eventsAPI.getParticipants(eventId);
-      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      setParticipants(data);
-      setSelectedParticipants(new Set());
-    } catch (error) {
-      console.error('Failed to load participants:', error);
-      alert('Failed to load participants. Please try again.');
-    }
-  };
-
-  // Load attendance for an event
-  const loadEventAttendance = async (eventId: string) => {
-    if (!eventId) {
-      setAttendance([]);
-      return;
-    }
-
-    try {
-      const response = await eventsAPI.getAttendance(eventId);
-      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
-      setAttendance(data);
-      setSelectedAttendance(new Set());
-    } catch (error) {
-      console.error('Failed to load attendance:', error);
-      alert('Failed to load attendance records. Please try again.');
-    }
-  };
-
-  // Handle event selection for deletion
-  const handleDeleteEventChange = (eventId: string) => {
-    setSelectedEventDelete(eventId);
-    if (eventId) {
-      loadEventParticipants(eventId);
-      loadEventAttendance(eventId);
-    }
-  };
-
-  // Toggle participant selection
-  const toggleParticipantSelection = (id: string) => {
-    const newSelected = new Set(selectedParticipants);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedParticipants(newSelected);
-  };
-
-  // Toggle attendance selection
-  const toggleAttendanceSelection = (id: string) => {
-    const newSelected = new Set(selectedAttendance);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedAttendance(newSelected);
-  };
-
   // Handle delete all participants
   const handleDeleteAllParticipants = () => {
-    setDeleteConfirmation({
-      isOpen: true,
-      type: 'participant',
-      deleteAll: true,
-      count: participants.length,
-    });
-  };
-
-  // Handle delete selected participants
-  const handleDeleteSelectedParticipants = () => {
-    if (selectedParticipants.size === 0) {
-      alert('Please select at least one participant to delete.');
+    if (!selectedEventDelete) {
+      setDeleteMessage({ type: 'error', text: 'Please select an event first.' });
       return;
     }
     setDeleteConfirmation({
       isOpen: true,
       type: 'participant',
-      deleteAll: false,
-      count: selectedParticipants.size,
     });
   };
 
   // Handle delete all attendance
   const handleDeleteAllAttendance = () => {
-    setDeleteConfirmation({
-      isOpen: true,
-      type: 'attendance',
-      deleteAll: true,
-      count: attendance.length,
-    });
-  };
-
-  // Handle delete selected attendance
-  const handleDeleteSelectedAttendance = () => {
-    if (selectedAttendance.size === 0) {
-      alert('Please select at least one attendance record to delete.');
+    if (!selectedEventDelete) {
+      setDeleteMessage({ type: 'error', text: 'Please select an event first.' });
       return;
     }
     setDeleteConfirmation({
       isOpen: true,
       type: 'attendance',
-      deleteAll: false,
-      count: selectedAttendance.size,
     });
   };
 
   // Perform delete
   const performDelete = async () => {
-    if (!deleteConfirmation.type) return;
+    if (!deleteConfirmation.type || !selectedEventDelete) return;
 
     try {
-      let result;
+      let result: { deleted: number; undoToken?: string };
 
       if (deleteConfirmation.type === 'participant') {
-        if (deleteConfirmation.deleteAll) {
-          result = await eventsAPI.deleteAllParticipants(selectedEventDelete);
+        result = await eventsAPI.deleteAllParticipants(selectedEventDelete).then(res => res.data);
+        setDeleteMessage({
+          type: 'success',
+          text: `Successfully deleted ${result.deleted} participant(s) and their attendance records.`,
+        });
+        if (result.undoToken) {
+          setLastDeleteUndo({ type: 'participant', token: result.undoToken });
         } else {
-          result = await eventsAPI.deleteSelectedParticipants(
-            selectedEventDelete,
-            Array.from(selectedParticipants)
-          );
+          setLastDeleteUndo(null);
         }
-        
-        await loadEventParticipants(selectedEventDelete);
-        alert(`Successfully deleted ${result.data.deleted} participant(s).`);
       } else if (deleteConfirmation.type === 'attendance') {
-        if (deleteConfirmation.deleteAll) {
-          result = await eventsAPI.deleteAllAttendance(selectedEventDelete);
+        result = await eventsAPI.deleteAllAttendance(selectedEventDelete).then(res => res.data);
+        setDeleteMessage({
+          type: 'success',
+          text: `Successfully deleted ${result.deleted} attendance record(s).`,
+        });
+        if (result.undoToken) {
+          setLastDeleteUndo({ type: 'attendance', token: result.undoToken });
         } else {
-          result = await eventsAPI.deleteSelectedAttendance(
-            selectedEventDelete,
-            Array.from(selectedAttendance)
-          );
+          setLastDeleteUndo(null);
         }
-        
-        await loadEventAttendance(selectedEventDelete);
-        alert(`Successfully deleted ${result.data.deleted} attendance record(s).`);
       }
 
       setDeleteConfirmation({
         isOpen: false,
         type: null,
-        deleteAll: false,
-        count: 0,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      alert(`Failed to delete: ${errorMsg}`);
+      setDeleteMessage({
+        type: 'error',
+        text: `Failed to delete: ${errorMsg}`,
+      });
+      setDeleteConfirmation({
+        isOpen: false,
+        type: null,
+      });
     }
   };
 
-  // Suppress unused function warnings
-  void handleDeleteEventChange;
-  void toggleParticipantSelection;
-  void toggleAttendanceSelection;
-  void handleDeleteAllParticipants;
-  void handleDeleteSelectedParticipants;
-  void handleDeleteAllAttendance;
-  void handleDeleteSelectedAttendance;
-  void performDelete;
+  // Undo handler (one-time per delete, disabled on refresh)
+  const handleUndoDelete = async () => {
+    if (!lastDeleteUndo || !selectedEventDelete) return;
+    try {
+      const result = await eventsAPI.undoDelete(selectedEventDelete, lastDeleteUndo.type, lastDeleteUndo.token).then(res => res.data);
+      setDeleteMessage({ type: 'success', text: `Undo successful. Restored ${result.restored} record(s).` });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      setDeleteMessage({ type: 'error', text: `Failed to undo: ${errorMsg}` });
+    } finally {
+      // Disable further undo after one attempt
+      setLastDeleteUndo(null);
+    }
+  };
 
   // Import participants
   const handleImportParticipants = async () => {
@@ -555,12 +503,12 @@ export function ImportAttendance() {
             <div className="file-upload">
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleParticipantFileSelect}
                 id="csv-file-participants"
               />
               <label htmlFor="csv-file-participants" className="file-label">
-                📄 Click to select CSV file
+                Click to select CSV or Excel file
               </label>
               {participantFileData.length > 0 && (
                 <div className="file-info">
@@ -671,12 +619,12 @@ export function ImportAttendance() {
             <div className="file-upload">
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleAttendanceFileSelect}
                 id="csv-file-attendance"
               />
               <label htmlFor="csv-file-attendance" className="file-label">
-                📄 Click to select CSV file
+                Click to select CSV or Excel file
               </label>
               {attendanceFileData.length > 0 && (
                 <div className="file-info">
@@ -764,121 +712,67 @@ export function ImportAttendance() {
       {/* Delete Tab */}
       {activeTab === 'delete' && (
         <div className="tab-content card">
+          {deleteMessage && (
+            <div className={`alert alert-${deleteMessage.type}`}>
+              {deleteMessage.text}
+              {lastDeleteUndo && deleteMessage.type === 'success' && (
+                <span style={{ marginLeft: '12px' }}>
+                  <button className="btn btn-outline-warning btn-sm" onClick={handleUndoDelete}>
+                    Undo Last Delete
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="section-header">
-            <h2>Delete Participants & Attendance</h2>
-            <p>Select an event and choose which participants or attendance records to delete</p>
+            <div>
+              <h2>Delete All Data for Event</h2>
+              <p className="section-desc">Permanently delete all participants or attendance records for a selected event. This action cannot be undone.</p>
+            </div>
           </div>
 
           {/* Event Selector */}
           <div className="form-group">
-            <label htmlFor="delete-event-select">Select Event:</label>
+            <label htmlFor="delete-event-select">Select Event *</label>
             <select
               id="delete-event-select"
               value={selectedEventDelete}
-              onChange={(e) => handleDeleteEventChange(e.target.value)}
-              className="form-control"
+              onChange={(e) => setSelectedEventDelete(e.target.value)}
             >
               <option value="">-- Choose an event --</option>
               {events?.map((event) => (
                 <option key={event.id} value={event.id}>
-                  {event.name} - {new Date(event.date).toLocaleDateString()}
+                  {event.name} ({new Date(event.date).toLocaleDateString()})
                 </option>
               ))}
             </select>
           </div>
 
-          {selectedEventDelete && (
-            <>
-              {/* Participants Section */}
-              <div className="delete-section">
-                <div className="section-header">
-                  <h3>Participants ({participants.length})</h3>
-                  <div className="button-group">
-                    <button
-                      className="btn btn-danger"
-                      onClick={handleDeleteAllParticipants}
-                      disabled={participants.length === 0}
-                    >
-                      Delete All Participants
-                    </button>
-                    <button
-                      className="btn btn-warning"
-                      onClick={handleDeleteSelectedParticipants}
-                      disabled={selectedParticipants.size === 0}
-                    >
-                      Delete Selected ({selectedParticipants.size})
-                    </button>
-                  </div>
-                </div>
+          {/* Delete Actions */}
+          <div className="delete-actions" style={{ display: 'flex', gap: '16px', marginTop: '30px' }}>
+            <button
+              className="btn btn-danger btn-lg"
+              onClick={handleDeleteAllParticipants}
+              disabled={!selectedEventDelete}
+              style={{ flex: 1 }}
+            >
+              <Trash2 size={18} /> Delete All Participants
+            </button>
+            <button
+              className="btn btn-danger btn-lg"
+              onClick={handleDeleteAllAttendance}
+              disabled={!selectedEventDelete}
+              style={{ flex: 1 }}
+            >
+              <Trash2 size={18} /> Delete All Attendance
+            </button>
+          </div>
 
-                {participants.length > 0 ? (
-                  <div className="checkbox-list">
-                    {participants.map((participant) => (
-                      <label key={participant.id} className="checkbox-item">
-                        <input
-                          type="checkbox"
-                          checked={selectedParticipants.has(participant.id)}
-                          onChange={() => toggleParticipantSelection(participant.id)}
-                        />
-                        <span className="checkbox-text">
-                          {participant.name} ({participant.email})
-                          {participant.is_blocklisted && <span className="blocklisted-badge">Blocklisted</span>}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="empty-message">No participants found for this event.</p>
-                )}
-              </div>
-
-              {/* Attendance Section */}
-              <div className="delete-section">
-                <div className="section-header">
-                  <h3>Attendance Records ({attendance.length})</h3>
-                  <div className="button-group">
-                    <button
-                      className="btn btn-danger"
-                      onClick={handleDeleteAllAttendance}
-                      disabled={attendance.length === 0}
-                    >
-                      Delete All Attendance
-                    </button>
-                    <button
-                      className="btn btn-warning"
-                      onClick={handleDeleteSelectedAttendance}
-                      disabled={selectedAttendance.size === 0}
-                    >
-                      Delete Selected ({selectedAttendance.size})
-                    </button>
-                  </div>
-                </div>
-
-                {attendance.length > 0 ? (
-                  <div className="checkbox-list">
-                    {attendance.map((record) => (
-                      <label key={record.id} className="checkbox-item">
-                        <input
-                          type="checkbox"
-                          checked={selectedAttendance.has(record.id)}
-                          onChange={() => toggleAttendanceSelection(record.id)}
-                        />
-                        <span className="checkbox-text">
-                          Participant {record.participant_id} - {record.status} ({new Date(record.created_at).toLocaleDateString()})
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="empty-message">No attendance records found for this event.</p>
-                )}
-              </div>
-            </>
-          )}
-
-          {!selectedEventDelete && (
-            <div className="empty-message">Please select an event to view and manage participants and attendance.</div>
-          )}
+          <div className="alert alert-warning" style={{ marginTop: '30px' }}>
+            <AlertTriangle size={16} style={{ display: 'inline', marginRight: '8px' }} />
+            <strong>Warning:</strong> Deleting participants will also remove all their attendance records. Deleting attendance will only remove attendance data.
+          </div>
         </div>
       )}
 
@@ -887,13 +781,15 @@ export function ImportAttendance() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h2>Confirm Delete</h2>
+              <h2>Confirm Delete All</h2>
             </div>
             <div className="modal-body">
               <p className="warning-message">
-                <AlertTriangle size={16} style={{ display: 'inline', marginRight: '8px' }} /> You are about to permanently delete {deleteConfirmation.count} {deleteConfirmation.type === 'participant' ? 'participant(s)' : 'attendance record(s)'}. 
-                {deleteConfirmation.type === 'participant' && ' This will also delete all associated attendance records. '}
-                This action cannot be undone.
+                <AlertTriangle size={16} style={{ display: 'inline', marginRight: '8px' }} /> 
+                You are about to permanently delete ALL {deleteConfirmation.type === 'participant' ? 'participants' : 'attendance records'} for this event.
+                {deleteConfirmation.type === 'participant' && ' This will also delete all associated attendance records.'}
+                <br /><br />
+                <strong>This action cannot be undone.</strong>
               </p>
             </div>
             <div className="modal-actions">
@@ -902,8 +798,6 @@ export function ImportAttendance() {
                 onClick={() => setDeleteConfirmation({
                   isOpen: false,
                   type: null,
-                  deleteAll: false,
-                  count: 0,
                 })}
               >
                 Cancel
@@ -912,7 +806,7 @@ export function ImportAttendance() {
                 className="modal-btn modal-btn-delete"
                 onClick={performDelete}
               >
-                Delete {deleteConfirmation.type === 'participant' ? 'Participant(s)' : 'Attendance Record(s)'}
+                Delete All {deleteConfirmation.type === 'participant' ? 'Participants' : 'Attendance'}
               </button>
             </div>
           </div>

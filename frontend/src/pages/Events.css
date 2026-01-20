@@ -17,7 +17,6 @@
 }
 
 .page-header p {
-  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -68,47 +67,29 @@
 
 .event-header h3 {
   margin: 0;
-  color: var(--neon-cyan);
   flex: 1;
+  color: var(--text-primary);
 }
 
-.event-date {
-  white-space: nowrap;
-  color: var(--neon-lime);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
+.event-date { white-space: nowrap; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
 
-.event-location {
-  color: var(--neon-purple);
-  font-size: 0.9rem;
-  margin: 8px 0;
-}
+.event-location { font-size: 0.9rem; margin: 8px 0; color: var(--text-primary); }
 
-.event-description {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin: 12px 0;
-  line-height: 1.5;
-}
+.event-description { font-size: 0.9rem; margin: 12px 0; line-height: 1.5; color: var(--text-primary); }
 
 .event-actions {
   display: flex;
   gap: 10px;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  
 }
 
 .event-actions .btn {
   flex: 1;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-}
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
 
 .loading-container {
   display: flex;

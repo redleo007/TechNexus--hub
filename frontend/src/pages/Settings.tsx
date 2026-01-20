@@ -159,7 +159,7 @@ export function Settings() {
                 onClick={handleReset}
                 disabled={saving}
               >
-                ↩️ Reset
+                Reset
               </button>
             </div>
           </form>
