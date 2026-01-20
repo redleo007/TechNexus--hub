@@ -22,16 +22,6 @@ interface NoShowRecord {
   };
 }
 
-interface NoShowByParticipant {
-  participant_id: string;
-  no_show_count: number;
-  participant: {
-    id: string;
-    name: string;
-    email: string;
-    is_blocklisted: boolean;
-  };
-}
 
 interface Participant {
   id: string;
@@ -155,7 +145,7 @@ export function NoShows() {
       await attendanceAPI.mark({
         participant_id: selectedParticipantId,
         event_id: selectedEventId,
-        status: 'not_attended',
+        status: 'no_show',
       });
       
       setMessage({ type: 'success', text: 'No-show record added successfully' });

@@ -102,7 +102,7 @@ export function ImportAttendance() {
   };
 
   // Normalize status values
-  const normalizeStatus = (status?: string): 'attended' | 'not_attended' | 'no_show' => {
+  const normalizeStatus = (status?: string): 'attended' | 'no_show' => {
     if (!status) return 'no_show';
     
     const normalized = status.toLowerCase().trim();
@@ -110,29 +110,25 @@ export function ImportAttendance() {
     if (normalized === 'attended' || normalized === 'yes') {
       return 'attended';
     } else if (normalized === 'not attended' || normalized === 'no' || normalized === 'not_attended') {
-      return 'not_attended';
+      return 'no_show';
     }
     
     return 'no_show';
   };
 
-  const getStatusBadgeColor = (status: 'attended' | 'not_attended' | 'no_show'): string => {
+  const getStatusBadgeColor = (status: 'attended' | 'no_show'): string => {
     switch (status) {
       case 'attended':
         return 'status-attended';
-      case 'not_attended':
-        return 'status-not-attended';
       case 'no_show':
         return 'status-no-show';
     }
   };
 
-  const getStatusLabel = (status: 'attended' | 'not_attended' | 'no_show'): string => {
+  const getStatusLabel = (status: 'attended' | 'no_show'): string => {
     switch (status) {
       case 'attended':
         return 'Attended';
-      case 'not_attended':
-        return 'Not Attended';
       case 'no_show':
         return 'No-Show';
     }

@@ -70,8 +70,8 @@ router.post(
       status,
     });
 
-    // Check if auto-blocking should occur (for no_show, not_attended, or null)
-    if (status === 'no_show' || status === 'not_attended' || !status) {
+    // Check if auto-blocking should occur (for no_show or null)
+    if (status === 'no_show' || !status) {
       await checkAndAutoBlock(participant_id);
     }
 
@@ -101,8 +101,8 @@ router.put(
     const { status } = req.body;
     const attendance = await attendanceService.updateAttendance(req.params.id, status);
 
-    // Check if auto-blocking should occur (for no_show, not_attended, or null)
-    if (status === 'no_show' || status === 'not_attended' || !status) {
+    // Check if auto-blocking should occur (for no_show or null)
+    if (status === 'no_show' || !status) {
       // Need to get participant_id from the attendance record
       await checkAndAutoBlock(attendance.participant_id);
     }

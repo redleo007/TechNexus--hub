@@ -30,9 +30,27 @@ export const getSettings = async () => {
 export const updateSettings = async (updates: any): Promise<any> => {
   const supabase = getSupabaseClient();
   
+  // Ensure a single settings row exists; create if missing, else update
+  const { data: existing } = await supabase
+    .from('settings')
+    .select('id')
+    .limit(1)
+    .single();
+
+  if (!existing) {
+    const { data, error } = await supabase
+      .from('settings')
+      .insert(updates)
+      .select()
+      .single();
+    if (error) throw new Error(`Failed to create settings: ${error.message}`);
+    return data;
+  }
+
   const { data, error } = await supabase
     .from('settings')
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', existing.id)
     .select()
     .single();
 

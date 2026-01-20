@@ -19,7 +19,7 @@ interface AttendanceRecord {
   id: string;
   participant_id: string;
   event_id: string;
-  status: 'attended' | 'no_show';
+  status: 'attended' | 'no_show' | 'not_attended';
   marked_at: string;
   participant_name?: string;
 }
@@ -66,7 +66,7 @@ export function EventsHistory() {
         const stats: EventStats = {
           total: records.length,
           attended: records.filter((r: AttendanceRecord) => r.status === 'attended').length,
-          noShow: records.filter((r: AttendanceRecord) => r.status === 'no_show').length,
+          noShow: records.filter((r: AttendanceRecord) => r.status === 'no_show' || r.status === 'not_attended').length,
           attendance: records,
         };
 
@@ -88,7 +88,7 @@ export function EventsHistory() {
     const matchesFilter =
       filter === 'all' ||
       (filter === 'confirmed' && record.status === 'attended') ||
-      (filter === 'no_show' && record.status === 'no_show');
+      (filter === 'no_show' && (record.status === 'no_show' || record.status === 'not_attended'));
 
     return matchesFilter;
   }) || [];

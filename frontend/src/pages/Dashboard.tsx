@@ -37,7 +37,7 @@ interface Participant {
 interface AttendanceRecord {
   id: string;
   participant_id: string;
-  status: 'attended' | 'no_show';
+  status: 'attended' | 'no_show' | 'not_attended';
 }
 
 export function Dashboard() {
@@ -84,7 +84,7 @@ export function Dashboard() {
         const records = attendance.data || [];
 
         const attended = records.filter((r: AttendanceRecord) => r.status === 'attended').length;
-        const noShow = records.filter((r: AttendanceRecord) => r.status === 'no_show').length;
+        const noShow = records.filter((r: AttendanceRecord) => r.status === 'no_show' || r.status === 'not_attended').length;
 
         setLatestEventStats({
           event: latestEvent,
@@ -307,7 +307,7 @@ export function Dashboard() {
               <p>View event details</p>
             </div>
           </a>
-          <a href="/import" className="action-card">
+          <a href="/import-attendance" className="action-card">
             <div className="action-icon"><RefreshCcw size={24} /></div>
             <div className="action-text">
               <h4>Import Data</h4>

@@ -4,7 +4,7 @@ export interface Attendance {
   id: string;
   event_id: string;
   participant_id: string;
-  status: 'attended' | 'not_attended' | 'no_show' | null;
+  status: 'attended' | 'no_show' | null;
   marked_at: string;
   created_at: string;
 }
@@ -101,7 +101,7 @@ export const deleteAttendance = async (id: string): Promise<void> => {
   }
 };
 
-export const updateAttendance = async (id: string, status: 'attended' | 'not_attended' | 'no_show'): Promise<Attendance> => {
+export const updateAttendance = async (id: string, status: 'attended' | 'no_show'): Promise<Attendance> => {
   const supabase = getSupabaseClient();
   
   const { data, error } = await supabase
@@ -118,12 +118,12 @@ export const updateAttendance = async (id: string, status: 'attended' | 'not_att
 export const getNoShowCount = async (participantId: string): Promise<number> => {
   const supabase = getSupabaseClient();
   
-  // Count records where status is 'no_show', 'not_attended', or NULL
+  // Count records where status is 'no_show' or NULL
   const { data, error } = await supabase
     .from('attendance')
     .select('id')
     .eq('participant_id', participantId)
-    .or('status.eq.no_show,status.eq.not_attended,status.is.null');
+    .or('status.eq.no_show,status.is.null');
 
   if (error) throw new Error(`Failed to count no-shows: ${error.message}`);
   return (data || []).length;
@@ -137,11 +137,11 @@ export const getAttendanceStats = async (): Promise<{ attended: number; noShow: 
     .select('*', { count: 'exact' })
     .eq('status', 'attended');
 
-  // Count no-shows: status = 'no_show', 'not_attended', or NULL
+  // Count no-shows: status = 'no_show' or NULL
   const { data: noShowData } = await supabase
     .from('attendance')
     .select('id')
-    .or('status.eq.no_show,status.eq.not_attended,status.is.null');
+    .or('status.eq.no_show,status.is.null');
 
   return {
     attended: attendedCount || 0,
@@ -153,7 +153,7 @@ export const getAllNoShows = async (): Promise<any[]> => {
   const supabase = getSupabaseClient();
   
   try {
-    // Fetch all records where status is 'no_show', 'not_attended', or NULL
+    // Fetch all records where status is 'no_show' or NULL
     const { data, error } = await supabase
       .from('attendance')
       .select(`
@@ -173,7 +173,7 @@ export const getAllNoShows = async (): Promise<any[]> => {
           email
         )
       `)
-      .or('status.eq.no_show,status.eq.not_attended,status.is.null')
+      .or('status.eq.no_show,status.is.null')
       .order('marked_at', { ascending: false, nullsFirst: false });
 
     if (error) {
@@ -203,7 +203,7 @@ export const getAllNoShows = async (): Promise<any[]> => {
 export const getNoShowsByParticipant = async (): Promise<any[]> => {
   const supabase = getSupabaseClient();
   
-  // Fetch all no-show records (no_show, not_attended, or NULL)
+  // Fetch all no-show records (no_show or NULL)
   const { data, error } = await supabase
     .from('attendance')
     .select(`
@@ -215,7 +215,7 @@ export const getNoShowsByParticipant = async (): Promise<any[]> => {
         is_blocklisted
       )
     `)
-    .or('status.eq.no_show,status.eq.not_attended,status.is.null');
+    .or('status.eq.no_show,status.is.null');
 
   if (error) throw new Error(`Failed to fetch no-shows by participant: ${error.message}`);
   
@@ -240,7 +240,7 @@ export const bulkImportAttendance = async (attendanceRecords: Array<{
   name: string;
   email: string;
   event_id: string;
-  attendance_status: 'attended' | 'not_attended' | 'no_show';
+  attendance_status: 'attended' | 'no_show';
 }>): Promise<Attendance[]> => {
   const supabase = getSupabaseClient();
   const importedRecords: Attendance[] = [];
@@ -281,12 +281,12 @@ export const bulkImportAttendance = async (attendanceRecords: Array<{
         .eq('event_id', record.event_id)
         .single();
 
-      // Map attendance status - keep not_attended as is
-      let attendanceStatus: 'attended' | 'not_attended' = 'not_attended';
+      // Map attendance status: treat any non-attended as 'no_show'
+      let attendanceStatus: 'attended' | 'no_show' = 'no_show';
       if (record.attendance_status === 'attended') {
         attendanceStatus = 'attended';
-      } else if (record.attendance_status === 'not_attended' || record.attendance_status === 'no_show') {
-        attendanceStatus = 'not_attended';
+      } else {
+        attendanceStatus = 'no_show';
       }
 
       if (existingAttendance) {
@@ -320,8 +320,8 @@ export const bulkImportAttendance = async (attendanceRecords: Array<{
         importedRecords.push(newAttendance as Attendance);
       }
 
-      // Auto-blocklist if no-show count reaches threshold (not_attended counts as no-show)
-      if (attendanceStatus === 'not_attended') {
+      // Auto-blocklist if no-show count reaches threshold
+      if (attendanceStatus === 'no_show') {
         const noShowCount = await getNoShowCount(participantId);
         if (noShowCount >= 2) {
           // Import the addToBlocklist function
@@ -341,7 +341,7 @@ export const bulkImportAttendanceBatch = async (attendanceRecords: Array<{
   name: string;
   email: string;
   event_id: string;
-  attendance_status: 'attended' | 'not_attended' | 'no_show';
+  attendance_status: 'attended' | 'no_show';
 }>): Promise<{ imported: number; failed: number; errors: string[] }> => {
   let imported = 0;
   let failed = 0;
@@ -367,7 +367,7 @@ export const bulkImportAttendanceWithSnapshots = async (
     name: string;
     email: string;
     event_id: string;
-    attendance_status: 'attended' | 'not_attended' | 'no_show';
+    attendance_status: 'attended' | 'no_show';
   }>,
   import_session_id?: string
 ): Promise<{ imported: number; failed: number; errors: string[] }> => {
@@ -433,12 +433,12 @@ export const bulkImportAttendanceWithSnapshots = async (
         is_new_participant: isNewParticipant,
       }]);
 
-      // Map attendance status - keep not_attended as is
-      let attendanceStatus: 'attended' | 'not_attended' = 'not_attended';
+      // Map attendance status: treat any non-attended as 'no_show'
+      let attendanceStatus: 'attended' | 'no_show' = 'no_show';
       if (record.attendance_status === 'attended') {
         attendanceStatus = 'attended';
-      } else if (record.attendance_status === 'not_attended' || record.attendance_status === 'no_show') {
-        attendanceStatus = 'not_attended';
+      } else {
+        attendanceStatus = 'no_show';
       }
 
       // Create or update attendance record
@@ -467,8 +467,8 @@ export const bulkImportAttendanceWithSnapshots = async (
         if (insertError) throw new Error(`Failed to create attendance: ${insertError.message}`);
       }
 
-      // Auto-blocklist if no-show count reaches threshold (not_attended counts as no-show)
-      if (attendanceStatus === 'not_attended') {
+      // Auto-blocklist if no-show count reaches threshold
+      if (attendanceStatus === 'no_show') {
         const noShowCount = await getNoShowCount(participantId);
         if (noShowCount >= 2) {
           const { addToBlocklist } = await import('./blocklistService');
