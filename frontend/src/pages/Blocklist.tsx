@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Ban, Trash2, Plus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import "./Blocklist.css";
 
 interface BlocklistEntry {
@@ -51,7 +51,7 @@ export function Blocklist() {
   const handleRemove = async (participantId: string) => {
     if (!confirm("Remove from blocklist?")) return;
     try {
-      await fetch(`/api/blocklist/\${participantId}`, { method: "DELETE" });
+      await fetch(`/api/blocklist/${participantId}`, { method: "DELETE" });
       setMessage({ type: "success", text: "Removed from blocklist" });
       await loadBlocklist();
     } catch (error) {
@@ -78,7 +78,7 @@ export function Blocklist() {
         </button>
       </div>
 
-      {message && <div className={`alert alert-\${message.type}`}>{message.text}</div>}
+      {message && <div className={`alert alert-${message.type}`}>{message.text}</div>}
 
       <div className="card">
         <div className="list-header">

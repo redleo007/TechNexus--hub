@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, BarChart3, MapPin, CheckCircle, XCircle, Check, X } from 'lucide-react';
+import { Calendar, BarChart3, MapPin, CheckCircle, XCircle } from 'lucide-react';
 import { eventsAPI, attendanceAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
 import { formatDate, formatDateTime } from '../utils/formatters';
@@ -31,10 +31,7 @@ interface EventStats {
   attendance: AttendanceRecord[];
 }
 
-type FilterType = 'all' | 'confirmed' | 'no_show';
-
 export function EventsHistory() {
-  const [filter, setFilter] = useState<FilterType>('all');
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [eventStats, setEventStats] = useState<EventStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -84,30 +81,9 @@ export function EventsHistory() {
 
   const selectedEvent = events?.find((e) => e.id === selectedEventId);
 
-  const filteredAttendance = eventStats?.attendance.filter((record) => {
-    const matchesFilter =
-      filter === 'all' ||
-      (filter === 'confirmed' && record.status === 'attended') ||
-      (filter === 'no_show' && (record.status === 'no_show' || record.status === 'not_attended'));
-
-    return matchesFilter;
-  }) || [];
-
   const getFilteredStats = () => {
     if (!eventStats) return { total: 0, attended: 0, noShow: 0 };
-    if (filter === 'all') return eventStats;
-    if (filter === 'confirmed') {
-      return {
-        total: eventStats.attended,
-        attended: eventStats.attended,
-        noShow: 0,
-      };
-    }
-    return {
-      total: eventStats.noShow,
-      attended: 0,
-      noShow: eventStats.noShow,
-    };
+    return eventStats;
   };
 
   const stats = getFilteredStats();

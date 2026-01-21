@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { XCircle, Download, Plus, Trash2 } from 'lucide-react';
-import { attendanceAPI, participantsAPI, eventsAPI } from '../api/client';
+import { participantsAPI, eventsAPI } from '../api/client';
 import { formatDateTime } from '../utils/formatters';
 import './NoShows.css';
 
