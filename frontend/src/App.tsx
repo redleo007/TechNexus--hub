@@ -9,8 +9,10 @@ import { ImportAttendance } from './pages/ImportAttendance';
 import { NoShows } from './pages/NoShows';
 import { Blocklist } from './pages/Blocklist';
 import { Settings } from './pages/Settings';
-import './styles/theme.css';
+import './styles/globals.css';
 import './styles/index.css';
+import './styles/responsive.css';
+import './styles/alignment.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
