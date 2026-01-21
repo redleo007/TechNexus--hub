@@ -58,7 +58,16 @@ export function EventsHistory() {
       setLoadingStats(true);
       try {
         const attendance = await attendanceAPI.getByEvent(selectedEventId);
-        const records = attendance.data || [];
+        console.log('Attendance response:', attendance);
+        
+        // Properly extract records from response
+        let records: AttendanceRecord[] = [];
+        
+        if (Array.isArray(attendance)) {
+          records = attendance;
+        } else if (attendance && typeof attendance === 'object') {
+          records = attendance.data && Array.isArray(attendance.data) ? attendance.data : [];
+        }
 
         const stats: EventStats = {
           total: records.length,
