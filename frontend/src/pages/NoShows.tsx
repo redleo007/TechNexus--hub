@@ -189,6 +189,19 @@ export function NoShows() {
 
   const totalNoShows = noShowRecords.length;
 
+  // Calculate per-participant no-show counts
+  const noShowsByParticipant = noShowRecords.reduce((acc: Record<string, number>, record) => {
+    const id = record.participant_id;
+    acc[id] = (acc[id] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Find max no-shows for any participant
+  const maxNoShowsPerParticipant = Math.max(...Object.values(noShowsByParticipant), 0);
+  const participantsWithHighNoShows = Object.entries(noShowsByParticipant)
+    .filter(([, count]) => count >= 2)
+    .length;
+
   return (
     <div className="no-shows">
       <div className="page-header">
@@ -208,6 +221,27 @@ export function NoShows() {
           <div className="stat-content">
             <h3>Total No-Shows</h3>
             <p className="stat-value">{totalNoShows}</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-content">
+            <h3>Participants with No-Shows</h3>
+            <p className="stat-value">{Object.keys(noShowsByParticipant).length}</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-content">
+            <h3>High Risk (≥2)</h3>
+            <p className="stat-value">{participantsWithHighNoShows}</p>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-content">
+            <h3>Highest No-Shows</h3>
+            <p className="stat-value">{maxNoShowsPerParticipant}</p>
           </div>
         </div>
       </div>
@@ -299,6 +333,7 @@ export function NoShows() {
                 <tr>
                   <th>Participant</th>
                   <th>Email</th>
+                  <th>No-Show Count</th>
                   <th>Event</th>
                   <th>Event Date</th>
                   <th>Marked At</th>
@@ -310,6 +345,11 @@ export function NoShows() {
                   <tr key={record.id}>
                     <td>{record.participants?.name || 'Unknown'}</td>
                     <td>{record.participants?.email || 'N/A'}</td>
+                    <td>
+                      <span className={`badge badge-${noShowsByParticipant[record.participant_id] >= 2 ? 'danger' : 'warning'}`}>
+                        {noShowsByParticipant[record.participant_id]}
+                      </span>
+                    </td>
                     <td>{record.events?.name || 'Unknown Event'}</td>
                     <td>{record.events?.date || 'N/A'}</td>
                     <td>{formatDateTime(record.marked_at)}</td>

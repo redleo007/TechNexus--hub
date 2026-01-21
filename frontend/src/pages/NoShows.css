@@ -300,3 +300,25 @@
     padding: 16px !important;
   }
 }
+/* Badge styles */
+.badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-danger {
+  background: rgba(255, 0, 110, 0.15);
+  color: var(--neon-magenta);
+  border: 1px solid var(--neon-magenta);
+}
+
+.badge-warning {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffa500;
+  border: 1px solid #ffa500;
+}

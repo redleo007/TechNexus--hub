@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
 import { successResponse } from '../utils/response';
-import { getActivityLogs } from '../services/blocklistService';
+import { getActivityLogs, getBlocklistCount, getBlocklistStats } from '../services/blocklistService';
 import { getEvents } from '../services/eventService';
-import { getActiveParticipantsCount, getBlocklistedParticipantsCount } from '../services/participantService';
+import { getActiveParticipantsCount } from '../services/participantService';
 import { getAttendanceStats } from '../services/attendanceService';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const events = await getEvents();
     const activeParticipants = await getActiveParticipantsCount();
-    const blocklistedParticipants = await getBlocklistedParticipantsCount();
+    const blocklistedParticipants = await getBlocklistCount(); // Use unified function
     const attendanceStats = await getAttendanceStats();
     const activities = await getActivityLogs(10);
 

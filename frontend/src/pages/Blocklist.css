@@ -265,6 +265,7 @@
   align-items: flex-start;
   margin-bottom: 16px;
   padding-bottom: 16px;
+  gap: var(--spacing-md);
 }
 
 .item-header h3 {
@@ -278,6 +279,13 @@
   color: var(--text-secondary);
 }
 
+.item-badges {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .item-details p {
   margin: 8px 0;
   font-size: 0.9rem;
@@ -285,6 +293,46 @@
 }
 
 .item-details strong { color: var(--text-primary); }
+
+.no-show-badge {
+  display: inline-block;
+  background: rgba(255, 0, 110, 0.15);
+  color: var(--neon-magenta);
+  border: 1px solid var(--neon-magenta);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Badge styles */
+.badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.badge-danger {
+  background: rgba(255, 0, 110, 0.15);
+  color: var(--neon-magenta);
+  border: 1px solid var(--neon-magenta);
+}
+
+.badge-warning {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffa500;
+  border: 1px solid #ffa500;
+}
+
+.badge-info {
+  background: rgba(0, 217, 255, 0.15);
+  color: var(--neon-cyan);
+  border: 1px solid var(--neon-cyan);
+}
 
 .item-actions {
   margin-top: 16px;

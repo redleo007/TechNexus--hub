@@ -5,13 +5,16 @@ import * as blocklistService from '../services/blocklistService';
 
 const router = Router();
 
+/**
+ * Add participant to blocklist (manual block)
+ */
 router.post(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
     const { participant_id, reason } = req.body;
     
     if (!participant_id || !reason) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields: participant_id, reason' });
     }
 
     const entry = await blocklistService.addToBlocklist(participant_id, reason);
@@ -19,6 +22,10 @@ router.post(
   })
 );
 
+/**
+ * Get full blocklist (unified endpoint for Dashboard and Blocklist page)
+ * This ensures both pages show the same count and list
+ */
 router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
@@ -27,6 +34,32 @@ router.get(
   })
 );
 
+/**
+ * Get blocklist count only
+ * Used for quick stats on Dashboard
+ */
+router.get(
+  '/count',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const count = await blocklistService.getBlocklistCount();
+    res.json(successResponse({ count }));
+  })
+);
+
+/**
+ * Get blocklist statistics
+ */
+router.get(
+  '/stats',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const stats = await blocklistService.getBlocklistStats();
+    res.json(successResponse(stats));
+  })
+);
+
+/**
+ * Remove participant from blocklist (manual unblock)
+ */
 router.delete(
   '/:participantId',
   asyncHandler(async (req: Request, res: Response) => {

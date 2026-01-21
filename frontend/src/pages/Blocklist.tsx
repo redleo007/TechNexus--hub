@@ -8,6 +8,9 @@ interface BlocklistEntry {
   id: string;
   participant_id: string;
   reason: string;
+  blocklist_type?: 'auto' | 'manual';
+  no_show_count?: number;
+  is_manually_unblocked?: boolean;
   created_at: string;
   participants?: {
     name: string;
@@ -261,15 +264,32 @@ export function Blocklist() {
                       <h3>{entry.participants?.name || 'Unknown'}</h3>
                       <p className="email">{entry.participants?.email}</p>
                     </div>
+                    <div className="item-badges">
+                      {entry.blocklist_type && (
+                        <span className={`badge badge-${entry.blocklist_type === 'auto' ? 'warning' : 'danger'}`}>
+                          {entry.blocklist_type === 'auto' ? '🔄 Auto-Blocked' : '⛔ Manual'}
+                        </span>
+                      )}
+                      {entry.is_manually_unblocked && (
+                        <span className="badge badge-info">✓ Override</span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="item-details">
                     <p><strong>Reason:</strong> {entry.reason}</p>
+                    {entry.no_show_count !== undefined && (
+                      <p><strong>No-Show Count:</strong> <span className="no-show-badge">{entry.no_show_count}</span></p>
+                    )}
                   </div>
 
                   <div className="item-actions">
-                    <button className="btn btn-danger btn-sm" onClick={() => handleRemoveFromBlocklist(entry.participant_id)}>
-                      <Trash2 size={16} /> Remove
+                    <button 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => handleRemoveFromBlocklist(entry.participant_id)}
+                      title={entry.blocklist_type === 'auto' ? 'Create manual override' : 'Remove from blocklist'}
+                    >
+                      <Trash2 size={16} /> {entry.blocklist_type === 'auto' ? 'Override' : 'Remove'}
                     </button>
                   </div>
                 </div>
