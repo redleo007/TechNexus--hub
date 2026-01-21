@@ -76,10 +76,18 @@ export function NoShows() {
     setLoading(true);
     try {
       // Load all no-show records from new API
-      const response = await fetch('/api/no-shows').then(r => r.json());
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const url = `${apiUrl}/no-shows`;
+      console.log('Fetching no-shows from:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
       
       // Response has: { total, uniqueParticipants, count, data }
-      const noShowsData = response.data || [];
+      const noShowsData = data.data || [];
       
       setNoShowRecords(noShowsData);
       setFilteredRecords(noShowsData);

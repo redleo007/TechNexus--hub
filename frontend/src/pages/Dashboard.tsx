@@ -24,7 +24,11 @@ export function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/dashboard/summary");
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const url = `${apiUrl}/dashboard/summary`;
+      console.log('Fetching dashboard from:', url);
+      
+      const response = await fetch(url);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);

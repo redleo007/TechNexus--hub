@@ -27,7 +27,14 @@ export function Blocklist() {
   const loadBlocklist = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/blocklist");
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const url = `${apiUrl}/blocklist`;
+      console.log('Fetching blocklist from:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
       const entries = data.data || [];
       setBlocklistData(entries);
