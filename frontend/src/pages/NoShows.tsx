@@ -75,11 +75,11 @@ export function NoShows() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load all no-show records
-      const allNoShows = await attendanceAPI.getNoShows().catch(() => ({ data: [] }));
+      // Load all no-show records from new API
+      const response = await fetch('/api/no-shows').then(r => r.json());
       
-      // Handle response - data is already unwrapped by interceptor
-      const noShowsData = Array.isArray(allNoShows) ? allNoShows : (allNoShows?.data || []);
+      // Response has: { total, uniqueParticipants, count, data }
+      const noShowsData = response.data || [];
       
       setNoShowRecords(noShowsData);
       setFilteredRecords(noShowsData);
@@ -142,11 +142,14 @@ export function NoShows() {
     }
 
     try {
-      await attendanceAPI.mark({
-        participant_id: selectedParticipantId,
-        event_id: selectedEventId,
-        status: 'no_show',
-      });
+      await fetch('/api/no-shows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participant_id: selectedParticipantId,
+          event_id: selectedEventId,
+        }),
+      }).then(r => r.json());
       
       setMessage({ type: 'success', text: 'No-show record added successfully' });
       setShowAddForm(false);
@@ -167,7 +170,8 @@ export function NoShows() {
     }
 
     try {
-      await attendanceAPI.delete(recordId);
+      await fetch(`/api/no-shows/${recordId}`, { method: 'DELETE' }).then(r => r.json());
+      
       setMessage({ type: 'success', text: 'No-show record deleted successfully' });
       
       // Reload data to refresh counts and lists
@@ -197,10 +201,6 @@ export function NoShows() {
   }, {});
 
   // Find max no-shows for any participant
-  const maxNoShowsPerParticipant = Math.max(...Object.values(noShowsByParticipant), 0);
-  const participantsWithHighNoShows = Object.entries(noShowsByParticipant)
-    .filter(([, count]) => count >= 2)
-    .length;
 
   return (
     <div className="no-shows">
@@ -221,27 +221,6 @@ export function NoShows() {
           <div className="stat-content">
             <h3>Total No-Shows</h3>
             <p className="stat-value">{totalNoShows}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon"><XCircle size={40} /></div>
-          <div className="stat-content">
-            <h3>Participants with No-Shows</h3>
-            <p className="stat-value">{Object.keys(noShowsByParticipant).length}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon"><XCircle size={40} /></div>
-          <div className="stat-content">
-            <h3>High Risk (≥2)</h3>
-            <p className="stat-value">{participantsWithHighNoShows}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon"><XCircle size={40} /></div>
-          <div className="stat-content">
-            <h3>Highest No-Shows</h3>
-            <p className="stat-value">{maxNoShowsPerParticipant}</p>
           </div>
         </div>
       </div>

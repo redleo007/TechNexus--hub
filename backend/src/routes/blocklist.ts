@@ -52,8 +52,15 @@ router.get(
 router.get(
   '/stats',
   asyncHandler(async (_req: Request, res: Response) => {
-    const stats = await blocklistService.getBlocklistStats();
-    res.json(successResponse(stats));
+    const blocklist = await blocklistService.getBlocklist();
+    const autoBlocked = blocklist.filter((b: any) => b.reason === 'auto_no_show').length;
+    const manualBlocked = blocklist.filter((b: any) => b.reason === 'manual').length;
+    
+    res.json(successResponse({
+      total: blocklist.length,
+      auto_blocked: autoBlocked,
+      manually_blocked: manualBlocked
+    }));
   })
 );
 

@@ -54,8 +54,8 @@ export const attendanceAPI = {
   update: (id: string, status: string) => api.put(`/attendance/${id}`, { status }),
   delete: (id: string) => api.delete(`/attendance/${id}`),
   getStats: () => api.get('/attendance/stats/overview'),
-  getNoShows: () => api.get('/attendance/no-shows'),
-  getNoShowsByParticipant: () => api.get('/attendance/no-shows/by-participant'),
+  getNoShows: () => api.get('/no-shows'),
+  getNoShowsByParticipant: () => api.get('/no-shows/by-participant'),
 };
 
 // Blocklist API

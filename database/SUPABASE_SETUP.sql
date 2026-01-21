@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS attendance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
-  status TEXT NOT NULL CHECK (status IN ('attended', 'no_show')),
+  status TEXT NOT NULL CHECK (status IN ('attended', 'not_attended')),
   marked_at TIMESTAMP DEFAULT NOW(),
   created_at TIMESTAMP DEFAULT NOW()
 );
