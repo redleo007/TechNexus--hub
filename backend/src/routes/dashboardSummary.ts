@@ -45,21 +45,31 @@ router.get('/summary', async (req: Request, res: Response) => {
     ]);
 
     if (eventError || participantError || noShowError) {
+      console.error('Dashboard errors:', { eventError, participantError, noShowError });
       throw new Error('Failed to fetch summary statistics');
     }
 
     // Get blocklist count
-    const blocklistedCount = await getBlocklistCount();
+    let blocklistedCount = 0;
+    try {
+      blocklistedCount = await getBlocklistCount();
+    } catch (blocklistErr) {
+      console.warn('Failed to get blocklist count, using 0:', blocklistErr);
+      blocklistedCount = 0;
+    }
 
-    return res.json({
+    const response = {
       events: eventCount || 0,
       participants: participantCount || 0,
       noShows: noShowCount || 0,
-      blocklisted: blocklistedCount || 0,
+      blocklisted: blocklistedCount,
       lastUpdated: new Date().toISOString()
-    });
+    };
+
+    console.log('✅ Dashboard summary calculated:', response);
+    return res.json(response);
   } catch (error) {
-    console.error('Dashboard summary error:', error);
+    console.error('❌ Dashboard summary error:', error);
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Internal server error'
     });

@@ -25,6 +25,14 @@ export function Dashboard() {
     setError(null);
     try {
       const response = await fetch("/api/dashboard/summary");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
+      }
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error(`Invalid response type: ${contentType}`);
+      }
       const data = await response.json();
       setStats(data);
     } catch (err) {
