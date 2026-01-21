@@ -25,12 +25,18 @@ router.post(
 /**
  * Get full blocklist (unified endpoint for Dashboard and Blocklist page)
  * This ensures both pages show the same count and list
+ * Returns blocklist with participant details (name, email)
  */
 router.get(
   '/',
   asyncHandler(async (_req: Request, res: Response) => {
-    const blocklist = await blocklistService.getBlocklist();
-    res.json(successResponse(blocklist));
+    const blocklist = await blocklistService.getBlocklistWithDetails();
+    const count = blocklist.length;
+    res.json(successResponse({
+      total: count,
+      count,
+      data: blocklist
+    }));
   })
 );
 

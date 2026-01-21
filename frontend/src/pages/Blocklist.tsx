@@ -1,65 +1,46 @@
-import { useState, useEffect } from 'react';
-import { Ban, Trash2, Plus, Download } from 'lucide-react';
-import { blocklistAPI, participantsAPI } from '../api/client';
-import { useAsync } from '../utils/hooks';
-import './Blocklist.css';
+import { useState, useEffect } from "react";
+import { Ban, Trash2, Plus } from "lucide-react";
+import "./Blocklist.css";
 
 interface BlocklistEntry {
   id: string;
   participant_id: string;
   reason: string;
-  blocklist_type?: 'auto' | 'manual';
-  no_show_count?: number;
-  is_manually_unblocked?: boolean;
   created_at: string;
-  participants?: {
-    name: string;
-    email: string;
-  };
-}
-
-interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  is_blocklisted: boolean;
+  participants?: { name: string; email: string };
 }
 
 export function Blocklist() {
   const [blocklistData, setBlocklistData] = useState<BlocklistEntry[]>([]);
   const [filteredData, setFilteredData] = useState<BlocklistEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ participant_id: '', reason: '' });
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    document.title = 'Blocklist - TechNexus Community';
+    document.title = "Blocklist - TechNexus Community";
+    loadBlocklist();
   }, []);
 
-  const { data: participants, refetch: refetchParticipants } = useAsync<Participant[]>(
-    () => participantsAPI.getAll(false).then((res) => res.data),
-    true
-  );
+  const loadBlocklist = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/blocklist");
+      const data = await response.json();
+      const entries = data.data || [];
+      setBlocklistData(entries);
+      setFilteredData(entries);
+      setCount(data.total || entries.length);
+    } catch (error) {
+      console.error("Failed to load blocklist:", error);
+      setMessage({ type: "error", text: "Failed to load blocklist" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const { refetch: refetchBlocklist } = useAsync<BlocklistEntry[]>(
-    async () => {
-      setLoading(true);
-      try {
-        const res = await blocklistAPI.getAll();
-        const data = (res.data || []) as BlocklistEntry[];
-        setBlocklistData(data);
-        setFilteredData(data);
-        return data;
-      } finally {
-        setLoading(false);
-      }
-    },
-    true
-  );
-
-  // Search by name
   useEffect(() => {
     const filtered = blocklistData.filter((entry) =>
       entry.participants?.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -67,91 +48,16 @@ export function Blocklist() {
     setFilteredData(filtered);
   }, [searchTerm, blocklistData]);
 
-  const handleAddToBlocklist = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.participant_id || !formData.reason.trim()) {
-      setMessage({ type: 'error', text: 'Please select a participant and enter a reason' });
-      return;
-    }
-
+  const handleRemove = async (participantId: string) => {
+    if (!confirm("Remove from blocklist?")) return;
     try {
-      await blocklistAPI.add({ participant_id: formData.participant_id, reason: formData.reason });
-      setMessage({ type: 'success', text: 'Participant added to blocklist' });
-      setFormData({ participant_id: '', reason: '' });
-      setShowAddForm(false);
-      
-      // Refresh data immediately
-      const res = await blocklistAPI.getAll();
-      const data = (res.data || []) as BlocklistEntry[];
-      setBlocklistData(data);
-      setFilteredData(data);
-      
-      refetchParticipants();
+      await fetch(`/api/blocklist/\${participantId}`, { method: "DELETE" });
+      setMessage({ type: "success", text: "Removed from blocklist" });
+      await loadBlocklist();
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Failed to add to blocklist',
-      });
+      console.error("Failed to remove:", error);
+      setMessage({ type: "error", text: "Failed to remove from blocklist" });
     }
-  };
-
-  const handleRemoveFromBlocklist = async (participantId: string) => {
-    if (!confirm('Remove this participant from blocklist?')) return;
-
-    try {
-      await blocklistAPI.remove(participantId);
-      setMessage({ type: 'success', text: 'Participant removed from blocklist' });
-      
-      // Refresh data immediately
-      const res = await blocklistAPI.getAll();
-      const data = (res.data || []) as BlocklistEntry[];
-      setBlocklistData(data);
-      setFilteredData(data);
-      
-      refetchParticipants();
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Failed to remove from blocklist',
-      });
-    }
-  };
-
-  const handleExport = () => {
-    if (blocklistData.length === 0) {
-      setMessage({ type: 'error', text: 'No records to export' });
-      return;
-    }
-
-    const dataToExport = searchTerm ? filteredData : blocklistData;
-    
-    if (dataToExport.length === 0) {
-      setMessage({ type: 'error', text: 'No records to export' });
-      return;
-    }
-
-    const headers = ['Name', 'Email', 'Reason', 'Date Added'];
-    const rows = dataToExport.map((entry) => [
-      entry.participants?.name || 'Unknown',
-      entry.participants?.email || 'N/A',
-      entry.reason,
-      new Date(entry.created_at).toLocaleDateString(),
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `blocklist-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    setMessage({ type: 'success', text: `Exported ${dataToExport.length} records` });
   };
 
   if (loading) {
@@ -163,142 +69,67 @@ export function Blocklist() {
     );
   }
 
-  const blocklistedCount = blocklistData.length;
-  const nonBlocklistedParticipants = participants?.filter((p) => !p.is_blocklisted) || [];
-
   return (
     <div className="blocklist">
       <div className="page-header">
-        <h1>Blocklist Management</h1>
-        <p>Manage blocklisted participants - search, add, edit, remove</p>
+        <div><h1>Blocklist</h1><p>Manage blocked participants</p></div>
+        <button className="btn btn-primary btn-sm" onClick={loadBlocklist}>
+          Refresh ({count})
+        </button>
       </div>
 
-      {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.text}
-        </div>
-      )}
-
-      <div className="blocklist-stat">
-        <div className="stat-card">
-          <div className="stat-icon"><Ban size={40} /></div>
-          <div className="stat-content">
-            <h3>Total Blocklisted</h3>
-            <p className="stat-value">{blocklistedCount}</p>
-          </div>
-        </div>
-      </div>
+      {message && <div className={`alert alert-\${message.type}`}>{message.text}</div>}
 
       <div className="card">
         <div className="list-header">
-          <div className="search-container">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="action-buttons">
-            <button className="btn btn-secondary btn-sm" onClick={handleExport}>
-              <Download size={16} /> Export CSV
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
-              <Plus size={16} /> Add Entry
-            </button>
-          </div>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button className="btn btn-secondary btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
+            <Plus size={16} /> Add
+          </button>
         </div>
 
-        {showAddForm && (
-          <div className="add-form-section">
-            <h3>Add to Blocklist</h3>
-            <form onSubmit={handleAddToBlocklist}>
-              <div className="form-group">
-                <label>Participant</label>
-                <select
-                  value={formData.participant_id}
-                  onChange={(e) => setFormData({ ...formData, participant_id: e.target.value })}
-                  required
-                >
-                  <option value="">Select a participant...</option>
-                  {nonBlocklistedParticipants.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Reason</label>
-                <textarea
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="Enter reason for blocklisting..."
-                  required
-                />
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Add to Blocklist
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowAddForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+        {filteredData.length > 0 ? (
+          <div className="table-wrapper">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Reason</th>
+                  <th>Added</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{entry.participants?.name || "Unknown"}</td>
+                    <td>{entry.participants?.email || "N/A"}</td>
+                    <td><span className="badge badge-warning">{entry.reason}</span></td>
+                    <td>{new Date(entry.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleRemove(entry.participant_id)}
+                        title="Remove from blocklist"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {filteredData && filteredData.length > 0 ? (
-          <>
-            <div className="blocklist-items">
-              {filteredData.map((entry) => (
-                <div key={entry.id} className="blocklist-item card">
-                  <div className="item-header">
-                    <div>
-                      <h3>{entry.participants?.name || 'Unknown'}</h3>
-                      <p className="email">{entry.participants?.email}</p>
-                    </div>
-                    <div className="item-badges">
-                      {entry.blocklist_type && (
-                        <span className={`badge badge-${entry.blocklist_type === 'auto' ? 'warning' : 'danger'}`}>
-                          {entry.blocklist_type === 'auto' ? '🔄 Auto-Blocked' : '⛔ Manual'}
-                        </span>
-                      )}
-                      {entry.is_manually_unblocked && (
-                        <span className="badge badge-info">✓ Override</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="item-details">
-                    <p><strong>Reason:</strong> {entry.reason}</p>
-                    {entry.no_show_count !== undefined && (
-                      <p><strong>No-Show Count:</strong> <span className="no-show-badge">{entry.no_show_count}</span></p>
-                    )}
-                  </div>
-
-                  <div className="item-actions">
-                    <button 
-                      className="btn btn-danger btn-sm" 
-                      onClick={() => handleRemoveFromBlocklist(entry.participant_id)}
-                      title={entry.blocklist_type === 'auto' ? 'Create manual override' : 'Remove from blocklist'}
-                    >
-                      <Trash2 size={16} /> {entry.blocklist_type === 'auto' ? 'Override' : 'Remove'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
         ) : (
           <div className="empty-state">
-            <p>{searchTerm ? 'No matches found' : 'No participants in blocklist'}</p>
+            <p>No blocklisted participants</p>
           </div>
         )}
       </div>
