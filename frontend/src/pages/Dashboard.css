@@ -423,13 +423,12 @@
 }
 
 .action-card:hover {
-  border-color:
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
+  border-color: var(--neon-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-width: 50px;
   color: var(--neon-cyan);
-
   background: rgba(0, 217, 255, 0.05);
   box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
   transform: translateY(-4px);
