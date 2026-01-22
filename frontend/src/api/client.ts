@@ -54,7 +54,8 @@ export const attendanceAPI = {
   update: (id: string, status: string) => api.put(`/attendance/${id}`, { status }),
   delete: (id: string) => api.delete(`/attendance/${id}`),
   getStats: () => api.get('/attendance/stats/overview'),
-  getNoShows: () => api.get('/no-shows'),
+  // unwrap payload so callers receive the JSON body directly
+  getNoShows: () => api.get('/no-shows').then(r => r.data),
   getNoShowsByParticipant: () => api.get('/no-shows/by-participant'),
 };
 
