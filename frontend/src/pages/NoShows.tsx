@@ -22,7 +22,6 @@ interface NoShowRecord {
   };
 }
 
-
 interface Participant {
   id: string;
   name: string;
@@ -75,23 +74,11 @@ export function NoShows() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load all no-show records from new API
-      const response = await attendanceAPI.getNoShows();
-      console.log('No-shows response:', response);
+      const payload = await attendanceAPI.getNoShows();
+      const dataArray = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
       
-      // Extract data array from response (handle both axios and direct response)
-      let noShowsData: NoShowRecord[] = [];
-      
-      if (Array.isArray(response)) {
-        noShowsData = response;
-      } else if (response && typeof response === 'object') {
-        // If response has data property, use it; otherwise use response if it's an array
-        noShowsData = response.data && Array.isArray(response.data) ? response.data : 
-                      Array.isArray(response) ? response : [];
-      }
-      
-      setNoShowRecords(noShowsData);
-      setFilteredRecords(noShowsData);
+      setNoShowRecords(dataArray);
+      setFilteredRecords(dataArray);
     } catch (error) {
       console.error('Failed to load no-shows:', error);
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to load no-show records' });
@@ -102,7 +89,6 @@ export function NoShows() {
     }
   };
 
-  // Update filtered records when search changes
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredRecords(noShowRecords);
@@ -165,7 +151,6 @@ export function NoShows() {
       setSelectedParticipantId('');
       setSelectedEventId('');
       
-      // Reload data to refresh counts and lists
       await loadData();
     } catch (error) {
       console.error('Failed to add no-show:', error);
@@ -183,7 +168,6 @@ export function NoShows() {
       
       setMessage({ type: 'success', text: 'No-show record deleted successfully' });
       
-      // Reload data to refresh counts and lists
       await loadData();
     } catch (error) {
       console.error('Failed to delete no-show:', error);
@@ -200,16 +184,13 @@ export function NoShows() {
     );
   }
 
-  const totalNoShows = noShowRecords.length;
+  const totalNoShows = (noShowRecords as any)?.total ?? noShowRecords.length;
 
-  // Calculate per-participant no-show counts
   const noShowsByParticipant = noShowRecords.reduce((acc: Record<string, number>, record) => {
     const id = record.participant_id;
     acc[id] = (acc[id] || 0) + 1;
     return acc;
   }, {});
-
-  // Find max no-shows for any participant
 
   return (
     <div className="no-shows">
@@ -219,8 +200,8 @@ export function NoShows() {
       </div>
 
       {message && (
-        <div className={`alert alert-${message.type}`}>
-          {message.text}
+        <div className={`alert alert-${message.type}`}> 
+          {message.text} 
         </div>
       )}
 
@@ -334,8 +315,8 @@ export function NoShows() {
                     <td>{record.participants?.name || 'Unknown'}</td>
                     <td>{record.participants?.email || 'N/A'}</td>
                     <td>
-                      <span className={`badge badge-${noShowsByParticipant[record.participant_id] >= 2 ? 'danger' : 'warning'}`}>
-                        {noShowsByParticipant[record.participant_id]}
+                      <span className={`badge badge-${noShowsByParticipant[record.participant_id] >= 2 ? 'danger' : 'warning'}`}> 
+                        {noShowsByParticipant[record.participant_id]} 
                       </span>
                     </td>
                     <td>{record.events?.name || 'Unknown Event'}</td>

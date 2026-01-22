@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Events } from './pages/Events';
 import { EventsHistory } from './pages/EventsHistory';
 import { ImportAttendance } from './pages/ImportAttendance';
@@ -63,7 +64,11 @@ function App() {
     <Router>
       <Layout onLogout={handleLogout}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={
+            <ErrorBoundary>
+              <Dashboard />
+            </ErrorBoundary>
+          } />
           <Route path="/events" element={<Events />} />
           <Route path="/events-history" element={<EventsHistory />} />
           <Route path="/import-attendance" element={<ImportAttendance />} />

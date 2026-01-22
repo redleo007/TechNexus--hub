@@ -47,7 +47,7 @@ app.use('/api/participants', participantsRouter);
 app.use('/api/attendance', attendanceRouter);
 app.use('/api/blocklist', blocklistOptimized); // NEW: Optimized blocklist API
 app.use('/api/settings', settingsRouter);
-app.use('/api/dashboard', dashboardSummary); // NEW: Optimized dashboard summary
+app.use('/api/dashboard', dashboardRouter); // Dashboard /stats endpoint
 app.use('/api/no-shows', noShowsRouter); // NEW: No-shows API
 
 // 404 handler

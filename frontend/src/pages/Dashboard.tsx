@@ -5,26 +5,14 @@ import "./Dashboard.css";
 
 /**
  * SAFE DASHBOARD MODEL - PRIMITIVES ONLY
- * All fields are guaranteed to be primitive types or null
+ * All fields are guaranteed to be primitive types
  * NEVER contains objects that would trigger React error #31
  */
-interface DashboardModel {
-  // Top-level statistics (primitives only)
+interface DashboardStats {
   totalEvents: number;
   totalParticipants: number;
   totalNoShows: number;
   totalBlocklisted: number;
-  
-  // Latest event with attendance breakdown (primitives only)
-  latestEvent: {
-    id: string;
-    name: string;
-    date: string;
-    totalRegistered: number;
-    attended: number;
-    noShows: number;
-    attendanceRate: number; // 0-100
-  } | null;
 }
 
 /**
@@ -32,12 +20,11 @@ interface DashboardModel {
  * Ensures dashboard renders safely even if API fails
  * All values are primitives - safe for JSX rendering
  */
-const DEFAULT_DASHBOARD: DashboardModel = {
+const DEFAULT_STATS: DashboardStats = {
   totalEvents: 0,
   totalParticipants: 0,
   totalNoShows: 0,
   totalBlocklisted: 0,
-  latestEvent: null,
 };
 
 /**
@@ -67,32 +54,16 @@ const safeNumber = (value: any, fallback: number = 0): number => {
 };
 
 /**
- * SAFE STRING EXTRACTION
- * Always returns a string or fallback value
- */
-const safeString = (value: any, fallback: string = ""): string => {
-  if (typeof value === 'string' && value.trim()) return value.trim();
-  return fallback;
-};
-
-/**
  * MAP BACKEND RESPONSE TO SAFE DASHBOARD MODEL
- * 
- * Extracts ONLY what we need:
- * - totalEvents (primitive number)
- * - activeParticipants → totalParticipants (primitive number)
- * - noShows (handle as number or object.total)
- * - blocklistedParticipants (primitive number)
- * - Strip ALL unused fields (uniqueParticipants, byParticipant, etc)
- * 
+ * Extracts ONLY what we need, stripping unused fields
  * Result: Pure primitive values, safe for React JSX
  */
-const mapBackendToDashboard = (response: any): DashboardModel => {
+const mapBackendToDashboard = (response: any): DashboardStats => {
   try {
     // Guard: response is an object
     if (!response || typeof response !== 'object') {
       console.warn('[Dashboard] Invalid response type:', typeof response);
-      return DEFAULT_DASHBOARD;
+      return DEFAULT_STATS;
     }
 
     // Extract data from axios response wrapper or direct response
@@ -101,45 +72,26 @@ const mapBackendToDashboard = (response: any): DashboardModel => {
     // Guard: data is an object
     if (typeof data !== 'object' || data === null) {
       console.warn('[Dashboard] Invalid data object');
-      return DEFAULT_DASHBOARD;
+      return DEFAULT_STATS;
     }
 
     // Map backend fields to dashboard model (PRIMITIVES ONLY)
-    const dashboard: DashboardModel = {
+    const stats: DashboardStats = {
       totalEvents: safeNumber(data.totalEvents, 0),
-      totalParticipants: safeNumber(data.activeParticipants, 0),
-      totalNoShows: safeNumber(data.noShows, 0), // Handles both number and { total: X, ... }
+      totalParticipants: safeNumber(data.activeParticipants ?? data.totalParticipants, 0),
+      totalNoShows: safeNumber(data.noShows, 0),
       totalBlocklisted: safeNumber(data.blocklistedParticipants, 0),
-      latestEvent: null, // Will be computed if events data is available
     };
 
-    // Extract latest event if available (e.g., from events array)
-    if (Array.isArray(data.events) && data.events.length > 0) {
-      const latest = data.events[0]; // Assuming backend returns sorted by date desc
-      if (latest && typeof latest === 'object') {
-        dashboard.latestEvent = {
-          id: safeString(latest.id, ''),
-          name: safeString(latest.name, 'Untitled Event'),
-          date: safeString(latest.date, '-'),
-          totalRegistered: safeNumber(latest.totalRegistered || latest.total_registered, 0),
-          attended: safeNumber(latest.attended, 0),
-          noShows: safeNumber(latest.noShows || latest.no_shows, 0),
-          attendanceRate: Math.round(
-            safeNumber(latest.attended, 0) / Math.max(safeNumber(latest.totalRegistered || latest.total_registered, 1), 1) * 100
-          ),
-        };
-      }
-    }
-
-    return dashboard;
+    return stats;
   } catch (error) {
     console.error('[Dashboard] Error mapping response:', error);
-    return DEFAULT_DASHBOARD;
+    return DEFAULT_STATS;
   }
 };
 
 export function Dashboard() {
-  const [dashboard, setDashboard] = useState<DashboardModel>(DEFAULT_DASHBOARD);
+  const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,6 +116,7 @@ export function Dashboard() {
 
       let response;
       try {
+        // Try /api/dashboard/stats (preferred endpoint)
         response = await dashboardAPI.getStats();
         clearTimeout(timeoutId);
       } catch (timeoutError) {
@@ -172,8 +125,8 @@ export function Dashboard() {
       }
 
       // Map backend response to safe dashboard model
-      const mappedDashboard = mapBackendToDashboard(response);
-      setDashboard(mappedDashboard);
+      const mappedStats = mapBackendToDashboard(response);
+      setStats(mappedStats);
       setError(null);
     } catch (err) {
       // Log error for debugging
@@ -190,7 +143,7 @@ export function Dashboard() {
 
       // CRITICAL: Still show dashboard with defaults
       // This prevents white screen even when API fails
-      setDashboard(DEFAULT_DASHBOARD);
+      setStats(DEFAULT_STATS);
     } finally {
       setLoading(false);
     }
@@ -242,7 +195,7 @@ export function Dashboard() {
           <div className="stat-icon"><Calendar size={24} /></div>
           <div className="stat-content">
             <h3>Events</h3>
-            <p className="stat-value">{dashboard?.totalEvents ?? 0}</p>
+            <p className="stat-value">{stats?.totalEvents ?? 0}</p>
           </div>
         </div>
 
@@ -251,7 +204,7 @@ export function Dashboard() {
           <div className="stat-icon"><Users size={24} /></div>
           <div className="stat-content">
             <h3>Participants</h3>
-            <p className="stat-value">{dashboard?.totalParticipants ?? 0}</p>
+            <p className="stat-value">{stats?.totalParticipants ?? 0}</p>
           </div>
         </div>
 
@@ -260,7 +213,7 @@ export function Dashboard() {
           <div className="stat-icon"><AlertCircle size={24} /></div>
           <div className="stat-content">
             <h3>No-Shows</h3>
-            <p className="stat-value">{dashboard?.totalNoShows ?? 0}</p>
+            <p className="stat-value">{stats?.totalNoShows ?? 0}</p>
           </div>
         </div>
 
@@ -269,54 +222,10 @@ export function Dashboard() {
           <div className="stat-icon"><Ban size={24} /></div>
           <div className="stat-content">
             <h3>Blocklisted</h3>
-            <p className="stat-value">{dashboard?.totalBlocklisted ?? 0}</p>
+            <p className="stat-value">{stats?.totalBlocklisted ?? 0}</p>
           </div>
         </div>
       </div>
-
-      {/* LATEST EVENT SECTION - Only show if data exists */}
-      {dashboard?.latestEvent && (
-        <div style={{ marginTop: '40px' }}>
-          <h2 style={{ marginBottom: '20px' }}>Latest Event</h2>
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-              {/* Event Details */}
-              <div>
-                <h3>{dashboard.latestEvent.name ?? "Untitled Event"}</h3>
-                <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: '8px' }}>
-                  📅 {dashboard.latestEvent.date ?? "-"}
-                </p>
-                <p style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>
-                  🆔 {dashboard.latestEvent.id ?? "-"}
-                </p>
-              </div>
-
-              {/* Attendance Breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div style={{ padding: '15px', backgroundColor: 'rgba(0, 217, 255, 0.1)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '5px' }}>Total Registered</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{dashboard.latestEvent.totalRegistered ?? 0}</div>
-                </div>
-
-                <div style={{ padding: '15px', backgroundColor: 'rgba(76, 175, 80, 0.1)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '5px' }}>Attended</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4CAF50' }}>{dashboard.latestEvent.attended ?? 0}</div>
-                </div>
-
-                <div style={{ padding: '15px', backgroundColor: 'rgba(244, 67, 54, 0.1)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '5px' }}>No-Shows</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#F44336' }}>{dashboard.latestEvent.noShows ?? 0}</div>
-                </div>
-
-                <div style={{ padding: '15px', backgroundColor: 'rgba(33, 150, 243, 0.1)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '5px' }}>Attendance Rate</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2196F3' }}>{dashboard.latestEvent.attendanceRate ?? 0}%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick Access Navigation - Always available */}
       <div className="quick-actions">
@@ -341,7 +250,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Status Info - Show when data is incomplete */}
+      {/* Status Info - Show when error */}
       {error && (
         <div className="dashboard-status" style={{ marginTop: '30px', padding: '16px', borderRadius: '8px', backgroundColor: 'rgba(0, 217, 255, 0.05)', border: '1px solid rgba(0, 217, 255, 0.2)', fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.7)' }}>
           <p style={{ margin: '0 0 8px 0' }}>
