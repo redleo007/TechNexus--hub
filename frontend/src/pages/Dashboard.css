@@ -433,7 +433,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
+  min-width: 50px;
   color: var(--neon-cyan);
 }
 
