@@ -79,7 +79,8 @@ export function Dashboard() {
 
       let response;
       try {
-        response = await dashboardAPI.getStats();
+        // Use getSummary endpoint for aggregated dashboard data
+        response = await dashboardAPI.getSummary();
         clearTimeout(timeoutId);
       } catch (timeoutError) {
         clearTimeout(timeoutId);
