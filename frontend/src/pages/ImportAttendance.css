@@ -1,6 +1,6 @@
 /* ================================
-   IMPORT & ATTENDANCE – FINAL CSS
-   ================================ */
+   IMPORT & ATTENDANCE – FINAL
+================================ */
 
 .import-attendance {
   animation: fadeIn 0.4s ease;
@@ -9,27 +9,35 @@
   padding: 0 var(--spacing-lg);
 }
 
-/* ---------- PAGE HEADER ---------- */
+@media (min-width: 1440px) {
+  .import-attendance {
+    max-width: 1280px;
+  }
+}
 
+/* ================================
+   PAGE HEADER
+================================ */
 .page-header {
   margin-bottom: var(--spacing-xl);
 }
 
 .page-header h1 {
-  margin: 0 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .page-header p {
-  color: var(--text-secondary);
   font-size: 1rem;
+  color: var(--text-secondary);
   max-width: 70%;
 }
 
-/* ---------- TABS ---------- */
-
+/* ================================
+   TABS
+================================ */
 .tabs-container {
   margin-bottom: var(--spacing-lg);
 }
@@ -38,15 +46,20 @@
   display: flex;
   border-bottom: 2px solid var(--border-color);
   overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-button {
   padding: 14px 28px;
   background: none;
   border: none;
-  color: var(--text-secondary);
-  font-weight: 600;
   font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
   cursor: pointer;
   border-bottom: 3px solid transparent;
   white-space: nowrap;
@@ -59,8 +72,9 @@
   border-bottom-color: var(--neon-cyan);
 }
 
-/* ---------- SECTION ---------- */
-
+/* ================================
+   SECTION
+================================ */
 .import-section {
   padding: 0;
 }
@@ -69,6 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-md);
   margin-bottom: 20px;
 }
 
@@ -78,13 +93,14 @@
 }
 
 .section-desc {
-  color: var(--text-secondary);
   font-size: 0.95rem;
+  color: var(--text-secondary);
   margin-bottom: 20px;
 }
 
-/* ---------- FILE UPLOAD ---------- */
-
+/* ================================
+   FILE UPLOAD
+================================ */
 .file-upload {
   margin: 30px 0;
 }
@@ -98,12 +114,13 @@
   align-items: center;
   justify-content: center;
   padding: 36px;
-  background: rgba(0, 217, 255, 0.05);
-  border: 2px dashed var(--neon-cyan);
   border-radius: 10px;
-  font-weight: 600;
+  border: 2px dashed var(--neon-cyan);
+  background: rgba(0, 217, 255, 0.05);
   color: var(--neon-cyan);
+  font-weight: 600;
   cursor: pointer;
+  text-align: center;
   transition: all 0.25s ease;
 }
 
@@ -112,8 +129,9 @@
   box-shadow: 0 0 18px rgba(0, 217, 255, 0.25);
 }
 
-/* ---------- TABLE ---------- */
-
+/* ================================
+   TABLE
+================================ */
 .table-wrapper {
   overflow-x: auto;
   margin-top: 20px;
@@ -130,23 +148,28 @@
 .table th,
 .table td {
   padding: 14px 18px;
-  font-size: 0.9rem;
   text-align: left;
+  font-size: 0.9rem;
 }
 
 .table th {
   background: rgba(0, 217, 255, 0.1);
   color: var(--neon-cyan);
-  text-transform: uppercase;
   font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table tbody tr:hover {
   background: rgba(0, 217, 255, 0.05);
 }
 
-/* ---------- BADGES ---------- */
-
+/* ================================
+   BADGES
+================================ */
 .badge {
   padding: 6px 12px;
   border-radius: 6px;
@@ -161,7 +184,7 @@
 }
 
 .status-not-attended {
-  background: rgba(255, 193, 7, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   color: var(--warning);
 }
 
@@ -170,8 +193,9 @@
   color: #ff5555;
 }
 
-/* ---------- ACTIONS ---------- */
-
+/* ================================
+   ACTIONS
+================================ */
 .import-actions {
   display: flex;
   justify-content: flex-end;
@@ -183,16 +207,18 @@
   min-width: 180px;
 }
 
-/* ---------- FORM ---------- */
-
+/* ================================
+   FORM
+================================ */
 .form-group {
   margin-bottom: 20px;
 }
 
 .form-group label {
-  font-weight: 600;
-  margin-bottom: 6px;
   display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .form-group select {
@@ -201,10 +227,12 @@
   border-radius: 8px;
   background: var(--input-bg);
   border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 
-/* ---------- MODAL ---------- */
-
+/* ================================
+   MODAL
+================================ */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -223,8 +251,9 @@
   width: 90%;
 }
 
-/* ---------- MOBILE ---------- */
-
+/* ================================
+   MOBILE
+================================ */
 @media (max-width: 768px) {
   .import-attendance {
     padding: 0 var(--spacing-md);
@@ -243,6 +272,12 @@
     font-size: 0.85rem;
   }
 
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
   .import-actions {
     flex-direction: column;
   }
@@ -258,8 +293,9 @@
   }
 }
 
-/* ---------- ANIMATIONS ---------- */
-
+/* ================================
+   ANIMATIONS
+================================ */
 @keyframes fadeIn {
   from {
     opacity: 0;

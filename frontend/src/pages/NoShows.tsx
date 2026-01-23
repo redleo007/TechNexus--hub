@@ -10,12 +10,12 @@ interface NoShowRecord {
   participant_id: string;
   status: string;
   marked_at: string;
-  events: {
+  events?: {
     id: string;
     name: string;
     date: string;
   };
-  participants: {
+  participants?: {
     id: string;
     name: string;
     email: string;
@@ -38,14 +38,21 @@ interface Event {
 export function NoShows() {
   const [noShowRecords, setNoShowRecords] = useState<NoShowRecord[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<NoShowRecord[]>([]);
+  const [totalNoShows, setTotalNoShows] = useState(0);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] =
+    useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedParticipantId, setSelectedParticipantId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
+
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+
+  /* ================= LOAD ON MOUNT ================= */
 
   useEffect(() => {
     document.title = 'No Shows - TechNexus Community';
@@ -53,55 +60,101 @@ export function NoShows() {
     loadFormData();
   }, []);
 
+  /* ================= LOAD FORM DATA ================= */
+
   const loadFormData = async () => {
     try {
       const [pRes, eRes] = await Promise.all([
         participantsAPI.getAll(false),
         eventsAPI.getAll(),
       ]);
-      const participantsData = Array.isArray(pRes) ? pRes : (pRes?.data || []);
-      const eventsData = Array.isArray(eRes) ? eRes : (eRes?.data || []);
-      
+
+      const participantsData = Array.isArray(pRes)
+        ? pRes
+        : pRes?.data ?? [];
+
+      const eventsData = Array.isArray(eRes)
+        ? eRes
+        : eRes?.data ?? [];
+
       setParticipants(participantsData);
       setEvents(eventsData);
-    } catch (error) {
-      console.error('Failed to load form data:', error);
+    } catch (err) {
+      console.error('Failed to load form data:', err);
       setParticipants([]);
       setEvents([]);
     }
   };
 
+  /* ================= LOAD NO-SHOW DATA ================= */
+
   const loadData = async () => {
     setLoading(true);
     try {
       const payload = await attendanceAPI.getNoShows();
-      const dataArray = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-      
-      setNoShowRecords(dataArray);
-      setFilteredRecords(dataArray);
+
+      let records: NoShowRecord[] = [];
+      let total = 0;
+
+      // ✅ Handles both DEV + PROD responses
+      if (Array.isArray(payload)) {
+        records = payload;
+        total = payload.length;
+      } else if (Array.isArray(payload?.data)) {
+        records = payload.data;
+        total = payload.total ?? payload.data.length;
+      }
+
+      setNoShowRecords(records);
+      setFilteredRecords(records);
+      setTotalNoShows(total);
     } catch (error) {
       console.error('Failed to load no-shows:', error);
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to load no-show records' });
+      setMessage({
+        type: 'error',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Failed to load no-show records',
+      });
       setNoShowRecords([]);
       setFilteredRecords([]);
+      setTotalNoShows(0);
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= SEARCH FILTER ================= */
+
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredRecords(noShowRecords);
-    } else {
-      const lower = searchTerm.toLowerCase();
-      setFilteredRecords(
-        noShowRecords.filter(r => 
+      return;
+    }
+
+    const lower = searchTerm.toLowerCase();
+    setFilteredRecords(
+      noShowRecords.filter(
+        (r) =>
           r.participants?.name?.toLowerCase().includes(lower) ||
           r.participants?.email?.toLowerCase().includes(lower)
-        )
-      );
-    }
+      )
+    );
   }, [searchTerm, noShowRecords]);
+
+  /* ================= NO-SHOW COUNT BY PARTICIPANT ================= */
+
+  const noShowsByParticipant = noShowRecords.reduce<Record<string, number>>(
+    (acc, record) => {
+      const id = record.participant_id;
+      acc[id] = (acc[id] || 0) + 1;
+      return acc;
+    },
+    {}
+  );
+
+  /* ================= EXPORT CSV ================= */
 
   const handleExportCSV = () => {
     if (filteredRecords.length === 0) {
@@ -109,184 +162,219 @@ export function NoShows() {
       return;
     }
 
-    const headers = ['Name', 'Email', 'Event', 'Event Date', 'Marked At'];
-    const rows = filteredRecords.map(r => [
-      r.participants?.name || 'Unknown',
-      r.participants?.email || 'N/A',
-      r.events?.name || 'Unknown Event',
-      r.events?.date || 'N/A',
+    const headers = [
+      'Name',
+      'Email',
+      'Event',
+      'Event Date',
+      'Marked At',
+    ];
+
+    const rows = filteredRecords.map((r) => [
+      r.participants?.name ?? 'Unknown',
+      r.participants?.email ?? 'N/A',
+      r.events?.name ?? 'Unknown Event',
+      r.events?.date ?? 'N/A',
       formatDateTime(r.marked_at),
     ]);
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map((c) => `"${c}"`).join(','))
+      .join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `no-shows-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+
     URL.revokeObjectURL(url);
-    
-    setMessage({ type: 'success', text: `Exported ${filteredRecords.length} records` });
+
+    setMessage({
+      type: 'success',
+      text: `Exported ${filteredRecords.length} records`,
+    });
   };
+
+  /* ================= ADD NO-SHOW ================= */
 
   const handleAddNoShow = async () => {
     if (!selectedParticipantId || !selectedEventId) {
-      setMessage({ type: 'error', text: 'Please select both participant and event' });
+      setMessage({
+        type: 'error',
+        text: 'Please select both participant and event',
+      });
       return;
     }
 
     try {
-      await fetch('/api/no-shows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participant_id: selectedParticipantId,
-          event_id: selectedEventId,
-        }),
-      }).then(r => r.json());
-      
-      setMessage({ type: 'success', text: 'No-show record added successfully' });
+      await attendanceAPI.mark({
+        participant_id: selectedParticipantId,
+        event_id: selectedEventId,
+        status: 'not_attended',
+      });
+
+      setMessage({
+        type: 'success',
+        text: 'No-show record added successfully',
+      });
+
       setShowAddForm(false);
       setSelectedParticipantId('');
       setSelectedEventId('');
-      
+
       await loadData();
-    } catch (error) {
-      console.error('Failed to add no-show:', error);
-      setMessage({ type: 'error', text: 'Failed to add no-show record' });
+    } catch (err) {
+      console.error('Failed to add no-show:', err);
+      setMessage({
+        type: 'error',
+        text: 'Failed to add no-show record',
+      });
     }
   };
+
+  /* ================= DELETE NO-SHOW ================= */
 
   const handleDeleteNoShow = async (recordId: string) => {
-    if (!confirm('Are you sure you want to delete this no-show record?')) {
-      return;
-    }
+    if (!confirm('Delete this no-show record?')) return;
 
     try {
-      await fetch(`/api/no-shows/${recordId}`, { method: 'DELETE' }).then(r => r.json());
-      
-      setMessage({ type: 'success', text: 'No-show record deleted successfully' });
-      
+      await attendanceAPI.delete(recordId);
+
+      setMessage({
+        type: 'success',
+        text: 'No-show record deleted successfully',
+      });
+
       await loadData();
-    } catch (error) {
-      console.error('Failed to delete no-show:', error);
-      setMessage({ type: 'error', text: 'Failed to delete no-show record' });
+    } catch (err) {
+      console.error('Failed to delete no-show:', err);
+      setMessage({
+        type: 'error',
+        text: 'Failed to delete no-show record',
+      });
     }
   };
+
+  /* ================= LOADING ================= */
 
   if (loading) {
     return (
       <div className="no-shows loading-container">
         <div className="spinner"></div>
-        <p>Loading no-show records...</p>
+        <p>Loading no-show records…</p>
       </div>
     );
   }
 
-  const totalNoShows = (noShowRecords as any)?.total ?? noShowRecords.length;
-
-  const noShowsByParticipant = noShowRecords.reduce((acc: Record<string, number>, record) => {
-    const id = record.participant_id;
-    acc[id] = (acc[id] || 0) + 1;
-    return acc;
-  }, {});
+  /* ================= UI ================= */
 
   return (
     <div className="no-shows">
       <div className="page-header">
         <h1>No-Shows Management</h1>
-        <p>Manage participants who missed events - search, add, edit, remove</p>
+        <p>Track and manage participants who missed events</p>
       </div>
 
       {message && (
-        <div className={`alert alert-${message.type}`}> 
-          {message.text} 
+        <div className={`alert alert-${message.type}`}>
+          {message.text}
         </div>
       )}
 
+      {/* ===== STATS ===== */}
       <div className="stats-section">
         <div className="stat-card">
-          <div className="stat-icon"><XCircle size={40} /></div>
+          <div className="stat-icon">
+            <XCircle size={36} />
+          </div>
           <div className="stat-content">
-            <h3>TOTAL NO-SHOWS</h3>
+            <h3>Total No-Shows</h3>
             <p className="stat-value">{totalNoShows}</p>
           </div>
         </div>
       </div>
 
+      {/* ===== LIST ===== */}
       <div className="card">
         <div className="list-header">
           <div className="search-container">
             <input
-              type="text"
               className="search-input"
-              placeholder="Search by name or email..."
+              placeholder="Search by name or email…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="action-buttons">
-            <button className="btn btn-primary btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
-              <Plus size={16} /> Add Entry
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowAddForm(!showAddForm)}
+            >
+              <Plus size={16} /> Add
             </button>
-            <button className="btn btn-secondary btn-sm" onClick={handleExportCSV}>
-              <Download size={16} /> Export CSV
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleExportCSV}
+            >
+              <Download size={16} /> Export
             </button>
           </div>
         </div>
 
+        {/* ===== ADD FORM ===== */}
         {showAddForm && (
           <div className="add-form-section">
-            <h3>Add No-Show Record</h3>
-            <form onSubmit={(e) => { e.preventDefault(); handleAddNoShow(); }}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Participant</label>
-                  <select
-                    value={selectedParticipantId}
-                    onChange={(e) => setSelectedParticipantId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select participant...</option>
-                    {participants
-                      .filter(p => !p.is_blocklisted)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.email})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Event</label>
-                  <select
-                    value={selectedEventId}
-                    onChange={(e) => setSelectedEventId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select event...</option>
-                    {events.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name} - {e.date}
+            <h3>Add No-Show</h3>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddNoShow();
+              }}
+            >
+              <div className="form-group">
+                <label>Participant</label>
+                <select
+                  value={selectedParticipantId}
+                  onChange={(e) =>
+                    setSelectedParticipantId(e.target.value)
+                  }
+                >
+                  <option value="">Select participant</option>
+                  {participants
+                    .filter((p) => !p.is_blocklisted)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.email})
                       </option>
                     ))}
-                  </select>
-                </div>
+                </select>
               </div>
+
+              <div className="form-group">
+                <label>Event</label>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                >
+                  <option value="">Select event</option>
+                  {events.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name} – {e.date}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Add No-Show
-                </button>
+                <button className="btn btn-primary">Add</button>
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setSelectedParticipantId('');
-                    setSelectedEventId('');
-                  }}
+                  onClick={() => setShowAddForm(false)}
                 >
                   Cancel
                 </button>
@@ -295,6 +383,7 @@ export function NoShows() {
           </div>
         )}
 
+        {/* ===== TABLE ===== */}
         {filteredRecords.length > 0 ? (
           <div className="table-wrapper">
             <table className="table">
@@ -306,29 +395,34 @@ export function NoShows() {
                   <th>Event</th>
                   <th>Event Date</th>
                   <th>Marked At</th>
-                  <th>Actions</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td>{record.participants?.name || 'Unknown'}</td>
-                    <td>{record.participants?.email || 'N/A'}</td>
+                {filteredRecords.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.participants?.name ?? 'Unknown'}</td>
+                    <td>{r.participants?.email ?? 'N/A'}</td>
                     <td>
-                      <span className={`badge badge-${noShowsByParticipant[record.participant_id] >= 2 ? 'danger' : 'warning'}`}> 
-                        {noShowsByParticipant[record.participant_id]} 
+                      <span
+                        className={`badge ${
+                          noShowsByParticipant[r.participant_id] >= 2
+                            ? 'badge-danger'
+                            : 'badge-warning'
+                        }`}
+                      >
+                        {noShowsByParticipant[r.participant_id] || 1}
                       </span>
                     </td>
-                    <td>{record.events?.name || 'Unknown Event'}</td>
-                    <td>{record.events?.date || 'N/A'}</td>
-                    <td>{formatDateTime(record.marked_at)}</td>
+                    <td>{r.events?.name ?? '—'}</td>
+                    <td>{r.events?.date ?? '—'}</td>
+                    <td>{formatDateTime(r.marked_at)}</td>
                     <td>
                       <button
                         className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteNoShow(record.id)}
-                        title="Delete no-show record"
+                        onClick={() => handleDeleteNoShow(r.id)}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                       </button>
                     </td>
                   </tr>
@@ -338,7 +432,7 @@ export function NoShows() {
           </div>
         ) : (
           <div className="empty-state">
-            <p>{searchTerm ? 'No matches found' : 'No no-show records'}</p>
+            <p>No no-show records</p>
           </div>
         )}
       </div>
