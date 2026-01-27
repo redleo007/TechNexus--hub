@@ -12,7 +12,6 @@ export interface BlocklistEntry {
   participant_id: string;
   reason: 'auto_no_show' | 'manual';
   created_at: string;
-  added_by?: string;
 }
 
 /**
@@ -83,8 +82,7 @@ export const getBlocklistEntry = async (participantId: string): Promise<Blocklis
  */
 export const addToBlocklist = async (
   participantId: string,
-  reason: 'auto_no_show' | 'manual',
-  addedBy?: string
+  reason: 'auto_no_show' | 'manual'
 ): Promise<BlocklistEntry> => {
   const supabase = getSupabaseClient();
 
@@ -96,7 +94,7 @@ export const addToBlocklist = async (
 
   const { data, error } = await supabase
     .from('blocklist')
-    .insert([{ participant_id: participantId, reason, added_by: addedBy || null }])
+    .insert([{ participant_id: participantId, reason }])
     .select()
     .single();
 

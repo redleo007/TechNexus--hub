@@ -9,6 +9,10 @@ ADD COLUMN IF NOT EXISTS blocklist_type TEXT DEFAULT 'manual' CHECK (blocklist_t
 ALTER TABLE blocklist
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
 
+-- Add added_by column for audit (used by legacy inserts)
+ALTER TABLE blocklist
+ADD COLUMN IF NOT EXISTS added_by TEXT;
+
 -- Update existing records to be 'auto' if they contain 'Auto-blocked' in the reason
 UPDATE blocklist
 SET blocklist_type = 'auto'
