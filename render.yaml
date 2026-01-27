@@ -3,7 +3,7 @@ services:
     name: technexus-backend
     env: node
     buildCommand: cd backend && npm install --production=false && npm run build
-    startCommand: cd backend && npm run build && npm run start
+    startCommand: cd backend && npm run start
     envVars:
       - key: NODE_ENV
         value: production
