@@ -122,10 +122,10 @@
   height: 100% !important;
   opacity: 0 !important;
   pointer-events: auto !important;
-  visibility: hidden !important;
+  visibility: visible !important;
   appearance: none !important;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
+  clip: auto;
+  clip-path: none;
   overflow: hidden;
   display: block;
   z-index: 2;
@@ -363,10 +363,10 @@
     height: 100% !important;
     opacity: 0 !important;
     pointer-events: auto !important;
-    visibility: hidden !important;
+    visibility: visible !important;
     appearance: none !important;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
+    clip: auto;
+    clip-path: none;
     overflow: hidden;
     display: block;
     z-index: 2;
