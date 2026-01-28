@@ -118,12 +118,18 @@
 .file-upload input {
   position: absolute !important;
   inset: 0 auto auto 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  appearance: none !important;
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
+  overflow: hidden;
+  display: block;
+  z-index: -1;
+  transform: scale(0);
   border: 0;
   padding: 0;
   margin: 0;
@@ -304,13 +310,21 @@
    TABLET FIX (KEY FIX 🔥)
 ================================ */
 @media (min-width: 769px) and (max-width: 1024px) {
+  .import-attendance {
+    padding: 0 var(--spacing-md);
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
   .page-header p {
     max-width: 100%;
   }
 
   .tab-button {
-    padding: 12px 18px;
-    font-size: 0.9rem;
+    padding: 10px 14px;
+    font-size: 0.85rem;
   }
 
   .table {
@@ -318,8 +332,17 @@
   }
 
   .import-actions,
+  .modal-actions,
   .delete-actions {
+    flex-direction: column;
     justify-content: flex-start;
+  }
+
+  .import-actions .btn,
+  .delete-actions .btn,
+  .modal-actions .btn,
+  .modal-btn {
+    width: 100%;
   }
 }
 
@@ -335,12 +358,18 @@
   .file-upload input {
     position: absolute !important;
     inset: 0 auto auto 0;
-    width: 1px !important;
-    height: 1px !important;
+    width: 0 !important;
+    height: 0 !important;
     opacity: 0 !important;
     pointer-events: none !important;
+    visibility: hidden !important;
+    appearance: none !important;
     clip: rect(0 0 0 0);
     clip-path: inset(50%);
+    overflow: hidden;
+    display: block;
+    z-index: -1;
+    transform: scale(0);
   }
 
   .file-label {
