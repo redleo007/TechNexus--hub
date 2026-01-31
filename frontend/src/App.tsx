@@ -69,12 +69,36 @@ function App() {
               <Dashboard />
             </ErrorBoundary>
           } />
-          <Route path="/events" element={<Events />} />
-          <Route path="/events-history" element={<EventsHistory />} />
-          <Route path="/import-attendance" element={<ImportAttendance />} />
-          <Route path="/no-shows" element={<NoShows />} />
-          <Route path="/blocklist" element={<Blocklist />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/events" element={
+            <ErrorBoundary>
+              <Events />
+            </ErrorBoundary>
+          } />
+          <Route path="/events-history" element={
+            <ErrorBoundary>
+              <EventsHistory />
+            </ErrorBoundary>
+          } />
+          <Route path="/import-attendance" element={
+            <ErrorBoundary>
+              <ImportAttendance />
+            </ErrorBoundary>
+          } />
+          <Route path="/no-shows" element={
+            <ErrorBoundary>
+              <NoShows />
+            </ErrorBoundary>
+          } />
+          <Route path="/blocklist" element={
+            <ErrorBoundary>
+              <Blocklist />
+            </ErrorBoundary>
+          } />
+          <Route path="/settings" element={
+            <ErrorBoundary>
+              <Settings />
+            </ErrorBoundary>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Layout>
