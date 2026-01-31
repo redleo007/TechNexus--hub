@@ -242,14 +242,22 @@ export const deleteAttendance = async (id: string): Promise<void> => {
 };
 
 /**
- * Get attendance by event
+ * Get attendance by event with participant details
  */
 export const getAttendanceByEvent = async (eventId: string): Promise<Attendance[]> => {
   const supabase = getSupabaseClient();
   
   const { data, error } = await supabase
     .from('attendance')
-    .select('*')
+    .select(`
+      *,
+      participants (
+        id,
+        name,
+        email,
+        is_blocklisted
+      )
+    `)
     .eq('event_id', eventId);
 
   if (error) throw new Error(`Failed to fetch attendance: ${error.message}`);

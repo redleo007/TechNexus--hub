@@ -15,19 +15,24 @@ router.get(
     const supabase = getSupabaseClient();
 
     // Run ALL count queries in parallel - no sequential waits
-    const [eventRes, participantRes, noShowRes, blocklistRes] = await Promise.all([
+    const [eventRes, allAttendanceRes, noShowRes, blocklistRes] = await Promise.all([
       supabase.from('events').select('*', { count: 'exact', head: true }),
-      supabase.from('participants').select('*', { count: 'exact', head: true }).eq('is_blocklisted', false),
+      // Get all attendance records to count unique participants
+      supabase.from('attendance').select('participant_id'),
       supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('status', 'not_attended'),
       supabase.from('blocklist').select('*', { count: 'exact', head: true }),
     ]);
+
+    // Count unique participants from attendance records
+    const attendanceRows = allAttendanceRes.data || [];
+    const uniqueParticipantIds = new Set(attendanceRows.map((r: any) => r.participant_id));
 
     // Short cache to reduce redundant requests during rapid refreshes
     res.set('Cache-Control', 'private, max-age=5');
 
     res.json(successResponse({
       totalEvents: eventRes.count || 0,
-      activeParticipants: participantRes.count || 0,
+      activeParticipants: uniqueParticipantIds.size,
       blocklistedParticipants: blocklistRes.count || 0,
       noShows: noShowRes.count || 0,
       recentActivities: [],
@@ -45,20 +50,25 @@ router.get(
   asyncHandler(async (_req: Request, res: Response) => {
     const supabase = getSupabaseClient();
 
-    // ALL queries in parallel - head:true skips fetching actual rows
-    const [eventRes, participantRes, noShowRes, blocklistRes] = await Promise.all([
+    // ALL queries in parallel
+    const [eventRes, allAttendanceRes, noShowRes, blocklistRes] = await Promise.all([
       supabase.from('events').select('*', { count: 'exact', head: true }),
-      supabase.from('participants').select('*', { count: 'exact', head: true }).eq('is_blocklisted', false),
+      // Get all attendance records to count unique participants
+      supabase.from('attendance').select('participant_id'),
       supabase.from('attendance').select('*', { count: 'exact', head: true }).eq('status', 'not_attended'),
       supabase.from('blocklist').select('*', { count: 'exact', head: true }),
     ]);
+
+    // Count unique participants from attendance records
+    const attendanceRows = allAttendanceRes.data || [];
+    const uniqueParticipantIds = new Set(attendanceRows.map((r: any) => r.participant_id));
 
     // Short cache for rapid refresh scenarios
     res.set('Cache-Control', 'private, max-age=5');
 
     res.json(successResponse({
       events: eventRes.count || 0,
-      participants: participantRes.count || 0,
+      participants: uniqueParticipantIds.size,
       noShows: noShowRes.count || 0,
       blocklisted: blocklistRes.count || 0,
       lastUpdated: new Date().toISOString(),

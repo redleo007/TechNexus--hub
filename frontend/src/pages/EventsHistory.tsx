@@ -110,7 +110,7 @@ export function EventsHistory() {
     loadStats();
   }, [selectedEventId]);
 
-  // Export participants to CSV (matches import format: Full Name, Event Pass)
+  // Export participants to CSV (matches import format: Full Name, Email, Event Pass)
   const exportParticipantsCSV = useCallback(async (event: Event) => {
     setExporting(true);
     try {
@@ -128,14 +128,15 @@ export function EventsHistory() {
         return;
       }
 
-      // Create CSV content matching import format (Full Name, Event Pass)
-      const headers = ['Full Name', 'Event Pass'];
+      // Create CSV content matching import format (Full Name, Email, Event Pass)
+      const headers = ['Full Name', 'Email', 'Event Pass'];
       const rows = participants.map((p: Participant, index: number) => {
         // Generate event pass code if not available (TNX_EVENT_XXX format)
         const eventCode = event.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase();
         const passCode = `TNX_${eventCode}_${String(index + 1).padStart(3, '0')}`;
         return [
           `"${(p.name || '').replace(/"/g, '""')}"`,
+          `"${(p.email || '').replace(/"/g, '""')}"`,
           passCode
         ];
       });
