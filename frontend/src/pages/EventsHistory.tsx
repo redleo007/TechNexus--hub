@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Icon from '../components/Icon';
 import { eventsAPI, attendanceAPI } from '../api/client';
 import { useAsync } from '../utils/hooks';
@@ -15,6 +15,13 @@ interface Event {
   updated_at: string;
 }
 
+interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  is_blocklisted: boolean;
+}
+
 interface AttendanceRecord {
   id: string;
   participant_id: string;
@@ -22,6 +29,7 @@ interface AttendanceRecord {
   status: 'attended' | 'no_show' | 'not_attended';
   marked_at: string;
   participant_name?: string;
+  participants?: Participant;
 }
 
 interface EventStats {
@@ -29,6 +37,7 @@ interface EventStats {
   attended: number;
   noShow: number;
   attendance: AttendanceRecord[];
+  participants: Participant[];
 }
 
 export function EventsHistory() {
@@ -37,6 +46,7 @@ export function EventsHistory() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     document.title = 'Events History - TechNexus Community';
@@ -57,16 +67,26 @@ export function EventsHistory() {
     const loadStats = async () => {
       setLoadingStats(true);
       try {
-        const attendance = await attendanceAPI.getByEvent(selectedEventId);
-        console.log('Attendance response:', attendance);
+        // Fetch both attendance and participants in parallel
+        const [attendanceRes, participantsRes] = await Promise.all([
+          attendanceAPI.getByEvent(selectedEventId),
+          eventsAPI.getParticipants(selectedEventId),
+        ]);
         
         // Properly extract records from response
         let records: AttendanceRecord[] = [];
-        
-        if (Array.isArray(attendance)) {
-          records = attendance;
-        } else if (attendance && typeof attendance === 'object') {
-          records = attendance.data && Array.isArray(attendance.data) ? attendance.data : [];
+        if (Array.isArray(attendanceRes)) {
+          records = attendanceRes;
+        } else if (attendanceRes && typeof attendanceRes === 'object') {
+          records = attendanceRes.data && Array.isArray(attendanceRes.data) ? attendanceRes.data : [];
+        }
+
+        // Extract participants
+        let participants: Participant[] = [];
+        if (Array.isArray(participantsRes)) {
+          participants = participantsRes;
+        } else if (participantsRes && typeof participantsRes === 'object') {
+          participants = participantsRes.data && Array.isArray(participantsRes.data) ? participantsRes.data : [];
         }
 
         const stats: EventStats = {
@@ -74,12 +94,14 @@ export function EventsHistory() {
           attended: records.filter((r: AttendanceRecord) => r.status === 'attended').length,
           noShow: records.filter((r: AttendanceRecord) => r.status === 'no_show' || r.status === 'not_attended').length,
           attendance: records,
+          participants: participants,
         };
 
         setEventStats(stats);
       } catch (error) {
         console.error('Failed to load event stats:', error);
         setEventStats(null);
+        setMessage({ type: 'error', text: 'Failed to load event details' });
       } finally {
         setLoadingStats(false);
       }
@@ -87,6 +109,119 @@ export function EventsHistory() {
 
     loadStats();
   }, [selectedEventId]);
+
+  // Export participants to CSV (matches import format: Full Name, Event Pass)
+  const exportParticipantsCSV = useCallback(async (event: Event) => {
+    setExporting(true);
+    try {
+      const participantsRes = await eventsAPI.getParticipants(event.id);
+      
+      let participants: Participant[] = [];
+      if (Array.isArray(participantsRes)) {
+        participants = participantsRes;
+      } else if (participantsRes && typeof participantsRes === 'object') {
+        participants = participantsRes.data && Array.isArray(participantsRes.data) ? participantsRes.data : [];
+      }
+
+      if (participants.length === 0) {
+        setMessage({ type: 'error', text: 'No participants found for this event' });
+        return;
+      }
+
+      // Create CSV content matching import format (Full Name, Event Pass)
+      const headers = ['Full Name', 'Event Pass'];
+      const rows = participants.map((p: Participant, index: number) => {
+        // Generate event pass code if not available (TNX_EVENT_XXX format)
+        const eventCode = event.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8).toUpperCase();
+        const passCode = `TNX_${eventCode}_${String(index + 1).padStart(3, '0')}`;
+        return [
+          `"${(p.name || '').replace(/"/g, '""')}"`,
+          passCode
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const safeName = event.name.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+      link.download = `${safeName}_participants_${formatDate(event.date)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setMessage({ type: 'success', text: `Exported ${participants.length} participants` });
+    } catch (error) {
+      console.error('Export failed:', error);
+      setMessage({ type: 'error', text: 'Failed to export participants' });
+    } finally {
+      setExporting(false);
+    }
+  }, []);
+
+  // Export attendance to CSV (matches import format: Name, Email, Status)
+  const exportAttendanceCSV = useCallback(async (event: Event) => {
+    setExporting(true);
+    try {
+      const attendanceRes = await eventsAPI.getAttendance(event.id);
+      
+      let records: any[] = [];
+      if (Array.isArray(attendanceRes)) {
+        records = attendanceRes;
+      } else if (attendanceRes && typeof attendanceRes === 'object') {
+        records = attendanceRes.data && Array.isArray(attendanceRes.data) ? attendanceRes.data : [];
+      }
+
+      if (records.length === 0) {
+        setMessage({ type: 'error', text: 'No attendance records found for this event' });
+        return;
+      }
+
+      // Create CSV content matching import format (Name, Email, Status)
+      const headers = ['Name', 'Email', 'Status'];
+      const rows = records.map((r: any) => {
+        const participant = r.participants || {};
+        // Map status to import-compatible format
+        const statusLabel = r.status === 'attended' ? 'attended' : 'not attended';
+        return [
+          `"${(participant.name || '').replace(/"/g, '""')}"`,
+          `"${(participant.email || '').replace(/"/g, '""')}"`,
+          statusLabel
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const safeName = event.name.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
+      link.download = `${safeName}_attendance_${formatDate(event.date)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setMessage({ type: 'success', text: `Exported ${records.length} attendance records` });
+    } catch (error) {
+      console.error('Export failed:', error);
+      setMessage({ type: 'error', text: 'Failed to export attendance' });
+    } finally {
+      setExporting(false);
+    }
+  }, []);
 
   const selectedEvent = events?.find((e) => e.id === selectedEventId);
 
@@ -169,6 +304,16 @@ export function EventsHistory() {
                       {event.location}
                     </p>
                   )}
+                  <div className="event-item-actions" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => exportParticipantsCSV(event)}
+                      disabled={exporting}
+                      title="Export participants to CSV"
+                    >
+                      <Icon name="download" alt="Export" sizePx={14} /> Export
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -208,15 +353,34 @@ export function EventsHistory() {
                     <p className="event-description">{selectedEvent.description}</p>
                   )}
                 </div>
-                <div className="event-dates">
-                  <div className="date-info">
-                    <span className="label">Created</span>
-                    <span className="value">{formatDateTime(selectedEvent.created_at)}</span>
-                  </div>
-                  <div className="date-info">
-                    <span className="label">Updated</span>
-                    <span className="value">{formatDateTime(selectedEvent.updated_at)}</span>
-                  </div>
+                <div className="event-actions-row">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => exportParticipantsCSV(selectedEvent)}
+                    disabled={exporting}
+                  >
+                    <Icon name="download" alt="Export" sizePx={16} />
+                    {exporting ? 'Exporting...' : 'Export Participants'}
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => exportAttendanceCSV(selectedEvent)}
+                    disabled={exporting}
+                  >
+                    <Icon name="download" alt="Export" sizePx={16} />
+                    {exporting ? 'Exporting...' : 'Export Attendance'}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="event-dates">
+                <div className="date-info">
+                  <span className="label">Created</span>
+                  <span className="value">{formatDateTime(selectedEvent.created_at)}</span>
+                </div>
+                <div className="date-info">
+                  <span className="label">Updated</span>
+                  <span className="value">{formatDateTime(selectedEvent.updated_at)}</span>
                 </div>
               </div>
 
