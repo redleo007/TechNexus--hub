@@ -1,6 +1,7 @@
 /* ================================
    IMPORT ATTENDANCE - MAIN STYLES
    Consistent with TechNexus theme
+   Deployment Ready - All breakpoints fixed
 ================================ */
 
 .import-attendance {
@@ -9,6 +10,8 @@
   flex-direction: column;
   gap: var(--spacing-xl);
   padding-bottom: var(--spacing-2xl);
+  width: 100%;
+  max-width: 100%;
 }
 
 @keyframes fadeIn {
@@ -48,12 +51,6 @@
   line-height: 1.5;
 }
 
-@media (max-width: 768px) {
-  .import-attendance .page-header {
-    margin-bottom: var(--spacing-md);
-  }
-}
-
 /* ================================
    TABS CONTAINER
 ================================ */
@@ -63,17 +60,20 @@
   padding: var(--spacing-sm);
   border: 1px solid var(--border-color);
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tabs {
   display: flex;
   gap: var(--spacing-xs);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
 .tab-button {
-  flex: 1;
-  min-width: 140px;
+  flex: 1 1 0;
+  min-width: 0;
   padding: var(--spacing-md) var(--spacing-lg);
   background: transparent;
   border: none;
@@ -85,6 +85,7 @@
   transition: all 0.3s ease;
   position: relative;
   white-space: nowrap;
+  text-align: center;
 }
 
 .tab-button:hover {
@@ -109,26 +110,6 @@
   background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
 }
 
-@media (max-width: 768px) {
-  .tabs {
-    gap: var(--spacing-xs);
-  }
-  
-  .tab-button {
-    min-width: 0;
-    flex: 1 1 calc(33.333% - var(--spacing-xs));
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 0.8rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .tab-button {
-    flex: 1 1 100%;
-    padding: var(--spacing-md);
-  }
-}
-
 /* ================================
    TAB CONTENT / CARD
 ================================ */
@@ -139,6 +120,8 @@
   padding: clamp(var(--spacing-lg), 3vw, var(--spacing-xl));
   transition: all 0.3s ease;
   animation: slideUp 0.4s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @keyframes slideUp {
@@ -164,6 +147,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+  width: 100%;
 }
 
 .section-header {
@@ -191,6 +175,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: var(--spacing-lg);
+  width: 100%;
 }
 
 .import-attendance .form-group label {
@@ -215,6 +200,8 @@
   background-repeat: no-repeat;
   background-position: right 16px center;
   padding-right: 44px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .import-attendance .form-group select:hover {
@@ -234,20 +221,13 @@
   padding: 12px;
 }
 
-@media (max-width: 480px) {
-  .import-attendance .form-group select {
-    font-size: 16px; /* Prevents iOS zoom */
-    padding: 12px 14px;
-    padding-right: 40px;
-  }
-}
-
 /* ================================
    FILE UPLOAD AREA
 ================================ */
 .file-upload {
   position: relative;
   margin-bottom: var(--spacing-lg);
+  width: 100%;
 }
 
 .file-upload input[type="file"] {
@@ -275,11 +255,19 @@
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-label::before {
-  content: '📁';
-  font-size: clamp(2rem, 4vw, 3rem);
+  content: '';
+  display: block;
+  width: clamp(32px, 6vw, 48px);
+  height: clamp(32px, 6vw, 48px);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d9ff'%3E%3Cpath d='M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   opacity: 0.8;
 }
 
@@ -301,6 +289,8 @@
   border: 1px solid rgba(0, 255, 65, 0.25);
   border-radius: var(--radius-md);
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-info span {
@@ -310,18 +300,6 @@
   color: var(--neon-lime);
   font-size: 0.9rem;
   font-weight: 500;
-}
-
-@media (max-width: 480px) {
-  .file-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-  }
-  
-  .file-info .btn {
-    width: 100%;
-  }
 }
 
 /* ================================
@@ -334,6 +312,8 @@
   padding: var(--spacing-lg);
   margin-top: var(--spacing-md);
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .preview-section h3 {
@@ -358,6 +338,7 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .import-attendance .table {
@@ -414,26 +395,6 @@
   background: rgba(255, 0, 110, 0.12);
 }
 
-@media (max-width: 768px) {
-  .import-attendance .table th,
-  .import-attendance .table td {
-    padding: 12px 14px;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .import-attendance .table {
-    min-width: 320px;
-  }
-  
-  .import-attendance .table th,
-  .import-attendance .table td {
-    padding: 10px 12px;
-    font-size: 0.8rem;
-  }
-}
-
 /* ================================
    STATUS BADGES
 ================================ */
@@ -470,22 +431,12 @@
   gap: var(--spacing-md);
   margin-top: var(--spacing-xl);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .import-actions .btn {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 150px;
-}
-
-@media (max-width: 480px) {
-  .import-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-  
-  .import-actions .btn {
-    width: 100%;
-  }
 }
 
 /* ================================
@@ -505,6 +456,7 @@
   gap: 8px;
   transition: all 0.3s ease;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .import-attendance .btn:disabled {
@@ -583,14 +535,6 @@
   box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
-@media (max-width: 768px) {
-  .import-attendance .btn-lg {
-    min-height: 46px;
-    padding: 12px 20px;
-    font-size: 0.9rem;
-  }
-}
-
 /* ================================
    ALERTS
 ================================ */
@@ -605,6 +549,8 @@
   font-size: 0.9rem;
   line-height: 1.5;
   animation: slideIn 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @keyframes slideIn {
@@ -642,14 +588,6 @@
   margin-left: var(--spacing-sm);
 }
 
-@media (max-width: 480px) {
-  .import-attendance .alert {
-    padding: 14px 16px;
-    font-size: 0.85rem;
-    flex-wrap: wrap;
-  }
-}
-
 /* ================================
    DELETE TAB STYLES
 ================================ */
@@ -657,23 +595,13 @@
   display: flex;
   gap: var(--spacing-lg);
   margin-top: var(--spacing-xl);
+  width: 100%;
 }
 
 .delete-actions .btn {
   flex: 1;
   min-height: 56px;
   font-size: 1rem;
-}
-
-@media (max-width: 768px) {
-  .delete-actions {
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-  
-  .delete-actions .btn {
-    min-height: 50px;
-  }
 }
 
 /* ================================
@@ -794,24 +722,6 @@
   box-shadow: 0 6px 25px rgba(255, 0, 110, 0.4);
 }
 
-@media (max-width: 480px) {
-  .modal {
-    margin: var(--spacing-md);
-    max-width: calc(100% - var(--spacing-lg));
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-actions {
-    padding: var(--spacing-lg);
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-}
-
 /* ================================
    ICON SPIN ANIMATION
 ================================ */
@@ -830,63 +740,36 @@
 }
 
 /* ================================
-   RESPONSIVE TYPOGRAPHY
+   DESKTOP BREAKPOINTS (769px+)
+   Priority: Large screens first
 ================================ */
-@media (max-width: 1200px) {
-  .import-attendance .page-header h1 {
-    font-size: 1.6rem;
-  }
-  
-  .section-header h2 {
-    font-size: 1.2rem;
-  }
-}
 
-@media (max-width: 768px) {
+/* Large Desktop (1920px and above) */
+@media (min-width: 1920px) {
   .import-attendance {
-    gap: var(--spacing-lg);
-    padding-bottom: var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
   }
   
   .import-attendance .page-header h1 {
-    font-size: 1.4rem;
+    font-size: 2rem;
   }
   
   .section-header h2 {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
   }
   
   .tab-content.card {
-    padding: var(--spacing-lg);
-  }
-}
-
-@media (max-width: 480px) {
-  .import-attendance {
-    gap: var(--spacing-md);
-  }
-  
-  .import-attendance .page-header h1 {
-    font-size: 1.25rem;
-  }
-  
-  .section-header h2 {
-    font-size: 1rem;
-  }
-  
-  .tab-content.card {
-    padding: var(--spacing-md);
+    padding: var(--spacing-2xl);
   }
   
   .preview-section {
-    padding: var(--spacing-md);
+    padding: var(--spacing-xl);
   }
 }
 
-/* ================================
-   ULTRA-WIDE DESKTOP OPTIMIZATION
-================================ */
-@media (min-width: 1440px) {
+/* Desktop (1440px - 1919px) */
+@media (min-width: 1440px) and (max-width: 1919px) {
   .import-attendance {
     max-width: 1200px;
     margin: 0 auto;
@@ -901,17 +784,285 @@
   }
 }
 
-@media (min-width: 1920px) {
+/* Standard Desktop (1200px - 1439px) */
+@media (min-width: 1200px) and (max-width: 1439px) {
   .import-attendance {
-    max-width: 1400px;
+    max-width: 1100px;
+    margin: 0 auto;
   }
   
   .import-attendance .page-header h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
   .section-header h2 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Medium Desktop (1024px - 1199px) */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .import-attendance {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  
+  .import-attendance .page-header h1 {
+    font-size: 1.6rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .tab-button {
+    padding: var(--spacing-md) var(--spacing-md);
+    font-size: 0.85rem;
+  }
+}
+
+/* Small Desktop / Large Tablet Landscape (769px - 1023px) */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .import-attendance {
+    max-width: 100%;
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+  
+  .import-attendance .page-header h1 {
     font-size: 1.5rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.15rem;
+  }
+  
+  .tabs {
+    flex-wrap: nowrap;
+  }
+  
+  .tab-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.8rem;
+  }
+  
+  .tab-content.card {
+    padding: var(--spacing-lg);
+  }
+  
+  .import-actions {
+    flex-wrap: nowrap;
+  }
+  
+  .import-actions .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .delete-actions {
+    flex-direction: row;
+    gap: var(--spacing-md);
+  }
+  
+  .delete-actions .btn {
+    flex: 1;
+    min-height: 50px;
+    font-size: 0.9rem;
+  }
+  
+  .import-attendance .table th,
+  .import-attendance .table td {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+  
+  .file-info {
+    flex-wrap: nowrap;
+  }
+  
+  .preview-section {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ================================
+   TABLET BREAKPOINTS (481px - 768px)
+================================ */
+@media (min-width: 481px) and (max-width: 768px) {
+  .import-attendance {
+    gap: var(--spacing-lg);
+    padding-bottom: var(--spacing-xl);
+  }
+  
+  .import-attendance .page-header {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .import-attendance .page-header h1 {
+    font-size: 1.4rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .tabs {
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+  }
+  
+  .tab-button {
+    flex: 1 1 calc(33.333% - var(--spacing-xs));
+    min-width: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.8rem;
+  }
+  
+  .tab-content.card {
+    padding: var(--spacing-lg);
+  }
+  
+  .import-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .import-actions .btn {
+    flex: 1 1 calc(50% - var(--spacing-sm));
+    min-width: 120px;
+  }
+  
+  .delete-actions {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .delete-actions .btn {
+    min-height: 50px;
+  }
+  
+  .import-attendance .table th,
+  .import-attendance .table td {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+  
+  .file-info {
+    flex-wrap: wrap;
+  }
+  
+  .modal {
+    max-width: 90%;
+  }
+}
+
+/* ================================
+   MOBILE BREAKPOINTS (480px and below)
+================================ */
+@media (max-width: 480px) {
+  .import-attendance {
+    gap: var(--spacing-md);
+  }
+  
+  .import-attendance .page-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .section-header h2 {
+    font-size: 1rem;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    flex: 1 1 100%;
+    padding: var(--spacing-md);
+  }
+  
+  .tab-content.card {
+    padding: var(--spacing-md);
+  }
+  
+  .preview-section {
+    padding: var(--spacing-md);
+  }
+  
+  .import-attendance .form-group select {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 12px 14px;
+    padding-right: 40px;
+  }
+  
+  .import-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .import-actions .btn {
+    width: 100%;
+  }
+  
+  .delete-actions {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .delete-actions .btn {
+    min-height: 50px;
+  }
+  
+  .import-attendance .table {
+    min-width: 320px;
+  }
+  
+  .import-attendance .table th,
+  .import-attendance .table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .file-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .file-info .btn {
+    width: 100%;
+  }
+  
+  .import-attendance .alert {
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+  }
+  
+  .import-attendance .btn-lg {
+    min-height: 46px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .modal {
+    margin: var(--spacing-md);
+    max-width: calc(100% - var(--spacing-lg));
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-actions {
+    padding: var(--spacing-lg);
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
 }
 
