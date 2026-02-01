@@ -589,22 +589,22 @@ export function ImportAttendance() {
                   </div>
                 </div>
               </div>
-
-              {participantFileData.length > 0 && (
-                <div className={styles['data-importer-file-status']}>
-                  <div className={styles['data-importer-file-name']}>
-                    <Icon name="check" alt="Ready" sizePx={18} />
-                    {participantFileData.length} rows loaded successfully
-                  </div>
-                  <button
-                    className={styles['data-importer-delete-file-btn']}
-                    onClick={() => setParticipantFileData([])}
-                  >
-                    Remove File
-                  </button>
-                </div>
-              )}
             </div>
+
+            {participantFileData.length > 0 && (
+              <div className={styles['data-importer-file-status']}>
+                <div className={styles['data-importer-file-name']}>
+                  <Icon name="check" alt="Ready" sizePx={18} />
+                  {participantFileData.length} rows loaded successfully
+                </div>
+                <button
+                  className={styles['data-importer-delete-file-btn']}
+                  onClick={() => setParticipantFileData([])}
+                >
+                  Remove File
+                </button>
+              </div>
+            )}
 
             {participantFileData.length > 0 && (
               <div className={styles['data-importer-preview']}>
@@ -715,22 +715,22 @@ export function ImportAttendance() {
                   </div>
                 </div>
               </div>
-
-              {attendanceFileData.length > 0 && (
-                <div className={styles['data-importer-file-status']}>
-                  <div className={styles['data-importer-file-name']}>
-                    <Icon name="check" alt="Ready" sizePx={18} />
-                    {attendanceFileData.length} records loaded
-                  </div>
-                  <button
-                    className={styles['data-importer-delete-file-btn']}
-                    onClick={() => setAttendanceFileData([])}
-                  >
-                    Remove File
-                  </button>
-                </div>
-              )}
             </div>
+
+            {attendanceFileData.length > 0 && (
+              <div className={styles['data-importer-file-status']}>
+                <div className={styles['data-importer-file-name']}>
+                  <Icon name="check" alt="Ready" sizePx={18} />
+                  {attendanceFileData.length} records loaded
+                </div>
+                <button
+                  className={styles['data-importer-delete-file-btn']}
+                  onClick={() => setAttendanceFileData([])}
+                >
+                  Remove File
+                </button>
+              </div>
+            )}
 
             {attendanceFileData.length > 0 && (
               <div className={styles['data-importer-preview']}>
