@@ -378,7 +378,7 @@ html, body {
   }
 
   .footer {
-    padding: 16px;
+    padding: 20px;
     font-size: 13px;
   }
 }
@@ -445,10 +445,6 @@ html, body {
 
   .sidebar-link {
     padding: 14px 20px;
-  }
-}
-    padding: 20px;
-    font-size: 13px;
   }
 }
 
