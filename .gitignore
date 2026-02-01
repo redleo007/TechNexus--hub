@@ -27,3 +27,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 .cache/
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
