@@ -3,7 +3,7 @@
    Clean, production-ready CSS
 ================================ */
 
-.import-attendance {
+.data-importer-page {
   display: flex;
   flex-direction: column;
   gap: 24px;

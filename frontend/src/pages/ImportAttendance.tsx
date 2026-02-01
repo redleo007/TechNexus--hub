@@ -28,11 +28,11 @@ interface Event {
 
 export function ImportAttendance() {
   const [activeTab, setActiveTab] = useState<'participants' | 'attendance' | 'delete'>('participants');
-  
+
   useEffect(() => {
     document.title = 'Import Data - TechNexus Community';
   }, []);
-  
+
   // Participants import state
   const [selectedEventParticipants, setSelectedEventParticipants] = useState<string>('');
   const [participantFileData, setParticipantFileData] = useState<ParsedParticipant[]>([]);
@@ -69,32 +69,32 @@ export function ImportAttendance() {
   // Map CSV columns to participant data
   const mapParticipantColumns = (row: any): ParsedParticipant => {
     const mappedRow: any = {};
-    
+
     for (const key in row) {
       const normalizedKey = normalizeColumnName(key);
-      
+
       // Match name/Name/Full Name/full_name columns (but not event_name)
       if ((normalizedKey.includes('name') || normalizedKey === 'full_name') && !normalizedKey.includes('event')) {
         mappedRow.name = row[key];
-      // Match email/Email/E-mail/e_mail columns
+        // Match email/Email/E-mail/e_mail columns
       } else if (normalizedKey.includes('email') || normalizedKey === 'e-mail' || normalizedKey === 'e_mail') {
         mappedRow.email = row[key];
-      // Match Event Pass/event_pass/eventpass/pass/code columns
+        // Match Event Pass/event_pass/eventpass/pass/code columns
       } else if (normalizedKey.includes('pass') || normalizedKey.includes('code') || normalizedKey.includes('event_pass') || normalizedKey.includes('eventpass')) {
         mappedRow.eventPass = row[key];
       }
     }
-    
+
     return mappedRow;
   };
 
   // Map CSV columns to attendance data
   const mapAttendanceColumns = (row: any): ParsedAttendance => {
     const mappedRow: any = {};
-    
+
     for (const key in row) {
       const normalizedKey = normalizeColumnName(key);
-      
+
       if (normalizedKey.includes('name') && !normalizedKey.includes('event')) {
         mappedRow.name = row[key];
       } else if (normalizedKey.includes('email')) {
@@ -103,22 +103,22 @@ export function ImportAttendance() {
         mappedRow.status = row[key];
       }
     }
-    
+
     return mappedRow;
   };
 
   // Normalize status values
   const normalizeStatus = (status?: string): 'attended' | 'no_show' => {
     if (!status) return 'no_show';
-    
+
     const normalized = status.toLowerCase().trim();
-    
+
     if (normalized === 'attended' || normalized === 'yes') {
       return 'attended';
     } else if (normalized === 'not attended' || normalized === 'no' || normalized === 'not_attended') {
       return 'no_show';
     }
-    
+
     return 'no_show';
   };
 
@@ -146,7 +146,7 @@ export function ImportAttendance() {
     if (!file) return;
 
     const fileName = file.name.toLowerCase();
-    
+
     // Validate file type
     if (fileName.endsWith('.csv')) {
       Papa.parse(file, {
@@ -189,7 +189,7 @@ export function ImportAttendance() {
     if (!file) return;
 
     const fileName = file.name.toLowerCase();
-    
+
     // Validate file type
     if (fileName.endsWith('.csv')) {
       Papa.parse(file, {
@@ -347,7 +347,7 @@ export function ImportAttendance() {
     }
 
     setImportingParticipants(true);
-    
+
     try {
       // Send all participants in one bulk request with fallback
       const payload = {
@@ -503,7 +503,7 @@ export function ImportAttendance() {
   };
 
   return (
-    <div className="import-attendance">
+    <div className="data-importer-page">
       <div className="page-header">
         <h1>Import Data</h1>
         <p>Bulk import participants and attendance records</p>
@@ -852,7 +852,7 @@ export function ImportAttendance() {
             </div>
             <div className="modal-body">
               <p className="warning-message">
-                <Icon name="warning" alt="Warning" sizePx={16} /> 
+                <Icon name="warning" alt="Warning" sizePx={16} />
                 You are about to permanently delete ALL {deleteConfirmation.type === 'participant' ? 'participants' : 'attendance records'} for this event.
                 {deleteConfirmation.type === 'participant' && ' This will also delete all associated attendance records.'}
                 <br /><br />
