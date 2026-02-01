@@ -18,6 +18,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -47,20 +48,20 @@
 /* ================================
    TABS
 ================================ */
-.tabs-container {
+.import-attendance .tabs-container {
   background: rgba(20, 20, 35, 0.8);
   border-radius: 12px;
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.tabs {
+.import-attendance .tabs {
   display: flex;
   gap: 8px;
   width: 100%;
 }
 
-.tab-button {
+.import-attendance .tab-button {
   flex: 1;
   padding: 14px 16px;
   border: none;
@@ -73,12 +74,12 @@
   transition: all 0.2s ease;
 }
 
-.tab-button:hover {
+.import-attendance .tab-button:hover {
   background: rgba(0, 217, 255, 0.08);
   color: #d0d0e0;
 }
 
-.tab-button.active {
+.import-attendance .tab-button.active {
   background: rgba(0, 217, 255, 0.15);
   color: #00d9ff;
 }
@@ -86,7 +87,7 @@
 /* ================================
    CARD / TAB CONTENT
 ================================ */
-.tab-content.card {
+.import-attendance .tab-content.card {
   background: rgba(20, 20, 35, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -130,7 +131,7 @@
   color: #d0d0e0;
 }
 
-.form-group select {
+.import-attendance .form-group select {
   width: 100%;
   padding: 14px 16px;
   background: rgba(10, 10, 20, 0.8);
@@ -161,7 +162,7 @@
 /* ================================
    FILE UPLOAD
 ================================ */
-.file-upload {
+.import-attendance .file-upload {
   position: relative;
   width: 100%;
   margin-top: 16px;
@@ -250,7 +251,7 @@
 /* ================================
    PREVIEW SECTION
 ================================ */
-.preview-section {
+.import-attendance .preview-section {
   margin-top: 24px;
   padding: 20px;
   background: rgba(0, 0, 0, 0.2);
@@ -421,8 +422,13 @@
 }
 
 @keyframes overlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ================================
@@ -434,7 +440,7 @@
   border-radius: 16px;
   width: 100%;
   max-width: 460px;
-  box-shadow: 
+  box-shadow:
     0 25px 80px rgba(0, 0, 0, 0.6),
     0 0 60px rgba(0, 217, 255, 0.08);
   animation: modalSlideIn 0.2s ease-out;
@@ -446,6 +452,7 @@
     opacity: 0;
     transform: scale(0.92) translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);

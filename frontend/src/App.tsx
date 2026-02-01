@@ -10,7 +10,7 @@ import { ImportAttendance } from './pages/ImportAttendance';
 import { NoShows } from './pages/NoShows';
 import { Blocklist } from './pages/Blocklist';
 import { Settings } from './pages/Settings';
-import './styles/index.css';
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
