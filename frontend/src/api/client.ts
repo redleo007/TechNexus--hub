@@ -1,4 +1,8 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosAdapter,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from 'axios';
 
 // Lightweight client-side response cache to avoid refetching unchanged data
 type CachePolicy = {
@@ -8,7 +12,7 @@ type CachePolicy = {
   key?: string;
 };
 
-type CachedConfig = AxiosRequestConfig & { cache?: CachePolicy };
+type CachedConfig = InternalAxiosRequestConfig & { cache?: CachePolicy };
 
 const responseCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 const DEFAULT_CACHE_TTL = 15000; // 15 seconds keeps UI snappy without going stale
@@ -54,14 +58,14 @@ export const api = axios.create({
 });
 
 // Serve cached GET responses when fresh; fall back to network otherwise
-api.interceptors.request.use((config: CachedConfig) => {
-  const method = (config.method ?? 'get').toLowerCase();
-  const cacheConfig = config.cache ?? {};
-  const cacheKey = cacheConfig.key ?? buildCacheKey(config);
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const cachedConfig = config as CachedConfig;
+  const method = (cachedConfig.method ?? 'get').toLowerCase();
+  const cacheConfig = cachedConfig.cache ?? {};
+  const cacheKey = cacheConfig.key ?? buildCacheKey(cachedConfig);
   const ttl = cacheConfig.ttlMs ?? DEFAULT_CACHE_TTL;
 
-  // Persist normalized cache config for response stage
-  (config as CachedConfig).cache = { ...cacheConfig, key: cacheKey, ttlMs: ttl };
+  cachedConfig.cache = { ...cacheConfig, key: cacheKey, ttlMs: ttl };
 
   const shouldUseCache = method === 'get' && cacheConfig.enabled !== false && !cacheConfig.forceRefresh;
 
@@ -70,18 +74,18 @@ api.interceptors.request.use((config: CachedConfig) => {
     const isFresh = cached && Date.now() - cached.timestamp < cached.ttl;
 
     if (cached && isFresh) {
-      config.adapter = async () => ({
+      cachedConfig.adapter = (adapterConfig => Promise.resolve({
         data: cached.data,
         status: 200,
         statusText: 'OK',
-        headers: {},
-        config,
+        headers: adapterConfig.headers ?? {},
+        config: adapterConfig,
         request: {},
-      });
+      })) as AxiosAdapter;
     }
   }
 
-  return config;
+  return cachedConfig;
 });
 
 // Events API
@@ -157,10 +161,11 @@ export const settingsAPI = {
 // Dashboard API
 export const dashboardAPI = {
   getStats: (forceRefresh: boolean = false) =>
-    api.get('/dashboard/stats', { cache: { forceRefresh, ttlMs: 12000 } }),
-  getSummary: () => api.get('/dashboard/summary', { cache: { ttlMs: 20000 } }),
+    api.get('/dashboard/stats', { cache: { forceRefresh, ttlMs: 12000 } } as AxiosRequestConfig),
+  getSummary: () =>
+    api.get('/dashboard/summary', { cache: { ttlMs: 20000 } } as AxiosRequestConfig),
   getOverview: (forceRefresh: boolean = false) =>
-    api.get('/dashboard/overview', { cache: { forceRefresh, ttlMs: 20000 } }),
+    api.get('/dashboard/overview', { cache: { forceRefresh, ttlMs: 20000 } } as AxiosRequestConfig),
 };
 
 // Normalize responses, populate cache for GETs, and clear cache after mutations
