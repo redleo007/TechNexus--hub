@@ -28,18 +28,18 @@
 /* ================================
    PAGE HEADER
 ================================ */
-.import-attendance .page-header {
+.data-importer-page .page-header {
   margin-bottom: 8px;
 }
 
-.import-attendance .page-header h1 {
+.data-importer-page .page-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
   color: #ffffff;
   margin: 0 0 8px 0;
 }
 
-.import-attendance .page-header p {
+.data-importer-page .page-header p {
   color: #a0a0b0;
   font-size: 0.95rem;
   margin: 0;
@@ -48,20 +48,20 @@
 /* ================================
    TABS
 ================================ */
-.import-attendance .tabs-container {
+.data-importer-page .tabs-container {
   background: rgba(20, 20, 35, 0.8);
   border-radius: 12px;
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.import-attendance .tabs {
+.data-importer-page .tabs {
   display: flex;
   gap: 8px;
   width: 100%;
 }
 
-.import-attendance .tab-button {
+.data-importer-page .tab-button {
   flex: 1;
   padding: 14px 16px;
   border: none;
@@ -74,12 +74,12 @@
   transition: all 0.2s ease;
 }
 
-.import-attendance .tab-button:hover {
+.data-importer-page .tab-button:hover {
   background: rgba(0, 217, 255, 0.08);
   color: #d0d0e0;
 }
 
-.import-attendance .tab-button.active {
+.data-importer-page .tab-button.active {
   background: rgba(0, 217, 255, 0.15);
   color: #00d9ff;
 }
@@ -87,7 +87,7 @@
 /* ================================
    CARD / TAB CONTENT
 ================================ */
-.import-attendance .tab-content.card {
+.data-importer-page .tab-content.card {
   background: rgba(20, 20, 35, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -131,7 +131,7 @@
   color: #d0d0e0;
 }
 
-.import-attendance .form-group select {
+.data-importer-page .form-group select {
   width: 100%;
   padding: 14px 16px;
   background: rgba(10, 10, 20, 0.8);
@@ -162,7 +162,7 @@
 /* ================================
    FILE UPLOAD
 ================================ */
-.import-attendance .file-upload {
+.data-importer-page .file-upload {
   position: relative;
   width: 100%;
   margin-top: 16px;
@@ -251,7 +251,7 @@
 /* ================================
    PREVIEW SECTION
 ================================ */
-.import-attendance .preview-section {
+.data-importer-page .data-preview-box {
   margin-top: 24px;
   padding: 20px;
   background: rgba(0, 0, 0, 0.2);
@@ -259,7 +259,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.preview-section h3 {
+.data-preview-box h3 {
   font-size: 1rem;
   font-weight: 600;
   color: #ffffff;
@@ -319,15 +319,15 @@
 }
 
 /* ================================
-   IMPORT ACTIONS
+   PAGE ACTIONS (Renamed from import-actions)
 ================================ */
-.import-actions {
+.page-actions {
   display: flex;
   gap: 16px;
   margin-top: 28px;
 }
 
-.import-actions .btn {
+.page-actions .btn {
   flex: 1;
   min-height: 50px;
 }
@@ -373,7 +373,7 @@
 /* ================================
    ALERTS
 ================================ */
-.import-attendance .alert {
+.data-importer-page .alert {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -384,19 +384,19 @@
   line-height: 1.5;
 }
 
-.import-attendance .alert-success {
+.data-importer-page .alert-success {
   background: rgba(0, 200, 150, 0.1);
   border: 1px solid rgba(0, 200, 150, 0.3);
   color: #00c896;
 }
 
-.import-attendance .alert-error {
+.data-importer-page .alert-error {
   background: rgba(255, 71, 87, 0.1);
   border: 1px solid rgba(255, 71, 87, 0.3);
   color: #ff6b81;
 }
 
-.import-attendance .alert-warning {
+.data-importer-page .alert-warning {
   background: rgba(255, 170, 0, 0.1);
   border: 1px solid rgba(255, 170, 0, 0.3);
   color: #ffaa00;
@@ -559,24 +559,24 @@
    RESPONSIVE - MOBILE
 ================================ */
 @media (max-width: 640px) {
-  .import-attendance {
+  .data-importer-page {
     gap: 16px;
     padding-bottom: 24px;
   }
 
-  .import-attendance .page-header h1 {
+  .data-importer-page .page-header h1 {
     font-size: 1.4rem;
   }
 
-  .tabs {
+  .data-importer-page .tabs {
     flex-direction: column;
   }
 
-  .tab-button {
+  .data-importer-page .tab-button {
     padding: 12px;
   }
 
-  .tab-content.card {
+  .data-importer-page .tab-content.card {
     padding: 20px 16px;
   }
 
@@ -600,7 +600,7 @@
     gap: 12px;
   }
 
-  .preview-section {
+  .data-importer-page .data-preview-box {
     padding: 16px;
   }
 
@@ -614,7 +614,7 @@
     padding: 10px 12px;
   }
 
-  .import-actions,
+  .page-actions,
   .delete-actions {
     flex-direction: column;
   }
@@ -651,7 +651,7 @@
 /* ================================
    BUTTON STYLES (local overrides)
 ================================ */
-.import-attendance .btn {
+.data-importer-page .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -665,74 +665,74 @@
   transition: all 0.2s ease;
 }
 
-.import-attendance .btn-primary {
+.data-importer-page .btn-primary {
   background: linear-gradient(135deg, #00d9ff 0%, #00b4d8 100%);
   color: #000000;
   box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
 }
 
-.import-attendance .btn-primary:hover:not(:disabled) {
+.data-importer-page .btn-primary:hover:not(:disabled) {
   box-shadow: 0 6px 25px rgba(0, 217, 255, 0.4);
   transform: translateY(-2px);
 }
 
-.import-attendance .btn-secondary {
+.data-importer-page .btn-secondary {
   background: rgba(255, 255, 255, 0.08);
   color: #d0d0e0;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.import-attendance .btn-secondary:hover:not(:disabled) {
+.data-importer-page .btn-secondary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
-.import-attendance .btn-danger {
+.data-importer-page .btn-danger {
   background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
   color: #ffffff;
   box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
 }
 
-.import-attendance .btn-danger:hover:not(:disabled) {
+.data-importer-page .btn-danger:hover:not(:disabled) {
   box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
   transform: translateY(-2px);
 }
 
-.import-attendance .btn-sm {
+.data-importer-page .btn-sm {
   padding: 8px 14px;
   font-size: 0.85rem;
 }
 
-.import-attendance .btn-lg {
+.data-importer-page .btn-lg {
   padding: 14px 24px;
   font-size: 0.95rem;
 }
 
-.import-attendance .btn:disabled {
+.data-importer-page .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.import-attendance .btn-outline-danger {
+.data-importer-page .btn-outline-danger {
   background: transparent;
   color: #ff6b81;
   border: 1px solid rgba(255, 71, 87, 0.4);
 }
 
-.import-attendance .btn-outline-danger:hover {
+.data-importer-page .btn-outline-danger:hover {
   background: rgba(255, 71, 87, 0.1);
   border-color: #ff4757;
 }
 
-.import-attendance .btn-outline-warning {
+.data-importer-page .btn-outline-warning {
   background: transparent;
   color: #ffaa00;
   border: 1px solid rgba(255, 170, 0, 0.4);
 }
 
-.import-attendance .btn-outline-warning:hover {
+.data-importer-page .btn-outline-warning:hover {
   background: rgba(255, 170, 0, 0.1);
   border-color: #ffaa00;
 }

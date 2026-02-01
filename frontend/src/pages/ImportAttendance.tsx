@@ -591,7 +591,7 @@ export function ImportAttendance() {
 
             {participantFileData.length > 0 && (
               <>
-                <div className="preview-section">
+                <div className="data-preview-box">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ margin: 0 }}>Preview ({participantFileData.length} rows)</h3>
                     <button
@@ -628,7 +628,7 @@ export function ImportAttendance() {
                   )}
                 </div>
 
-                <div className="import-actions">
+                <div className="page-actions">
                   <button
                     className="btn btn-primary btn-lg"
                     onClick={handleImportParticipants}
@@ -709,7 +709,7 @@ export function ImportAttendance() {
 
             {attendanceFileData.length > 0 && (
               <>
-                <div className="preview-section">
+                <div className="data-preview-box">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ margin: 0 }}>Preview ({attendanceFileData.length} rows)</h3>
                     <button
@@ -754,7 +754,7 @@ export function ImportAttendance() {
                   )}
                 </div>
 
-                <div className="import-actions">
+                <div className="page-actions">
                   <button
                     className="btn btn-primary btn-lg"
                     onClick={handleImportAttendance}
