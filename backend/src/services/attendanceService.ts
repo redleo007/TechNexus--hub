@@ -41,10 +41,10 @@ const normalizeStatus = (status?: string): 'attended' | 'not_attended' => {
  */
 export const getNoShowTotal = async (): Promise<number> => {
   const supabase = getSupabaseClient();
-  
+
   const { count, error } = await supabase
     .from('attendance')
-    .select('*', { count: 'exact' })
+    .select('*', { count: 'planned' })
     .eq('status', 'not_attended');
 
   if (error) throw new Error(`Failed to count no-shows: ${error.message}`);
@@ -57,7 +57,7 @@ export const getNoShowTotal = async (): Promise<number> => {
  */
 export const getNoShowsByParticipant = async (): Promise<{ [key: string]: number }> => {
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase
     .from('attendance')
     .select('participant_id')
@@ -80,7 +80,7 @@ export const getNoShowsByParticipant = async (): Promise<{ [key: string]: number
  */
 export const getNoShowStats = async (): Promise<NoShowStats> => {
   const supabase = getSupabaseClient();
-  
+
   // Single query - get all no-show records
   const { data, error } = await supabase
     .from('attendance')
@@ -90,7 +90,7 @@ export const getNoShowStats = async (): Promise<NoShowStats> => {
   if (error) throw new Error(`Failed to fetch no-show stats: ${error.message}`);
 
   const records = data || [];
-  
+
   // Single pass to aggregate
   const byParticipant: { participant_id: string; count: number }[] = [];
   const uniqueSet = new Set<string>();
@@ -119,7 +119,7 @@ export const getNoShowStats = async (): Promise<NoShowStats> => {
  */
 export const getNoShowCountForParticipant = async (participantId: string): Promise<number> => {
   const supabase = getSupabaseClient();
-  
+
   const { count, error } = await supabase
     .from('attendance')
     .select('*', { count: 'exact' })
@@ -135,7 +135,7 @@ export const getNoShowCountForParticipant = async (participantId: string): Promi
  */
 export const getAllNoShows = async (): Promise<any[]> => {
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase
     .from('attendance')
     .select(`
@@ -176,7 +176,7 @@ export const markAttendance = async (
   if (participant?.is_blocklisted) {
     throw new Error('Participant is blocklisted and cannot be marked for attendance');
   }
-  
+
   // Check if exists - single query
   const { data: existing } = await supabase
     .from('attendance')
@@ -232,7 +232,7 @@ export const markAttendance = async (
  */
 export const deleteAttendance = async (id: string): Promise<void> => {
   const supabase = getSupabaseClient();
-  
+
   const { error } = await supabase
     .from('attendance')
     .delete()
@@ -246,7 +246,7 @@ export const deleteAttendance = async (id: string): Promise<void> => {
  */
 export const getAttendanceByEvent = async (eventId: string): Promise<Attendance[]> => {
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase
     .from('attendance')
     .select(`
@@ -269,7 +269,7 @@ export const getAttendanceByEvent = async (eventId: string): Promise<Attendance[
  */
 export const getAttendanceByParticipant = async (participantId: string): Promise<Attendance[]> => {
   const supabase = getSupabaseClient();
-  
+
   const { data, error } = await supabase
     .from('attendance')
     .select('*')
