@@ -65,6 +65,20 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Fallback CORS headers in case a build/deploy step runs an older bundle
+app.use((req, res, next) => {
+  const origin = FRONTEND_URL || req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(corsOptions.optionsSuccessStatus || 204);
+  }
+  next();
+});
+
 // Health check
 app.get('/health', asyncHandler(async (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
