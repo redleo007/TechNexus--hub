@@ -49,7 +49,19 @@ try {
 }
 
 // Middleware
-app.use(cors());
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.FRONTEND_ORIGIN || undefined;
+
+const corsOptions = {
+  origin: FRONTEND_URL || true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 204,
+} as any;
+
+app.use(cors(corsOptions));
+// Ensure preflight requests are handled for all routes
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
